@@ -36,7 +36,6 @@
 #include "config.hpp"
 
 namespace ou {
-namespace mqtt {
 
 class Mqtt {
 public:
@@ -47,7 +46,8 @@ public:
     : std::runtime_error( e ) {}
   };
 
-  Mqtt( const Config& );
+  Mqtt( const mqtt::Config& );
+  Mqtt( mqtt::Config&& );
   ~Mqtt();
 
   using fPublishComplete_t = std::function<void(bool,int)>;
@@ -63,12 +63,13 @@ private:
 
   enum class EState{ init, created, connecting, connected, start_reconnect, retry_connect, disconnecting, destruct } m_state;
 
+  mqtt::Config m_config;
+
   std::thread m_threadConnect;
 
   MQTTClient m_clientMqtt;
   MQTTClient_connectOptions m_conn_opts;
   MQTTClient_message m_pubmsg;
-  const std::string m_sMqttUrl;
 
   std::mutex m_mutexDeliveryToken;
 
@@ -76,6 +77,8 @@ private:
   umapDeliveryToken_t m_umapDeliveryToken;
 
   fMessage_t m_fMessage;
+
+  void Init();
 
   static int MessageArrived( void* context, char* topicName, int topicLen, MQTTClient_message* message );
   static void DeliveryComplete( void* context, MQTTClient_deliveryToken token );
@@ -85,5 +88,4 @@ private:
 
 };
 
-} // namespace mqtt
 } // namespace ou

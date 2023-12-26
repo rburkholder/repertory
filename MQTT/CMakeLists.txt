@@ -28,19 +28,10 @@ add_library(
   ${file_cpp}
   )
 
-set_target_properties(
-  ${DEF_LIB_Shared}
-    PROPERTIES
-      PUBLIC_HEADER "${file_hpp_public}"
-      OUTPUT_NAME ${DEF_OUTPUT_NAME}
-      #DEBUG_POSTFIX "_d"
-  )
-
 target_link_libraries(
   ${DEF_LIB_Shared}
-    #pthread
-    libpaho-mqtt3c.a
-    #${Boost_LIBRARIES}
+    PUBLIC
+      libpaho-mqtt3c.a
   )
 
 set(DEF_LIB_Static ${PROJECT_NAME}_static)
@@ -51,20 +42,20 @@ add_library(
   ${file_cpp}
   )
 
+target_link_libraries(
+  ${DEF_LIB_Static}
+    PUBLIC
+      libpaho-mqtt3c.a
+  )
+
 set_target_properties(
+  ${DEF_LIB_Shared}
   ${DEF_LIB_Static}
     PROPERTIES
       PUBLIC_HEADER "${file_hpp_public}"
       OUTPUT_NAME ${DEF_OUTPUT_NAME}
       #DEBUG_POSTFIX "_d"
   )
-
-target_link_libraries(
-${DEF_LIB_Static}
-  #pthread
-  libpaho-mqtt3c.a
-  #${Boost_LIBRARIES}
-)
 
 set(DEF_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/ou/${PROJECT_NAME})
 

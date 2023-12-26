@@ -34,25 +34,41 @@ namespace {
 }
 
 namespace ou {
-namespace mqtt {
 
-Mqtt::Mqtt( const Config& choices )
+Mqtt::Mqtt( const mqtt::Config& choices )
 : m_state( EState::init )
+, m_config( choices )
 , m_conn_opts( MQTTClient_connectOptions_initializer )
 , m_pubmsg( MQTTClient_message_initializer )
-, m_sMqttUrl( "tcp://" + choices.sHost + ":1883" )
 , m_fMessage( nullptr )
 {
+  Init();
+}
+
+Mqtt::Mqtt( mqtt::Config&& choices )
+: m_state( EState::init )
+, m_config( std::move( choices ) )
+, m_conn_opts( MQTTClient_connectOptions_initializer )
+, m_pubmsg( MQTTClient_message_initializer )
+, m_fMessage( nullptr )
+{
+  Init();
+}
+
+void Mqtt::Init() {
+
+  const std::string sMqttUrl("tcp://" + m_config.sHost + ":1883" );
+
   m_conn_opts.keepAliveInterval = 20;
   m_conn_opts.cleansession = 1;
   m_conn_opts.connectTimeout = c_nTimeOut;
-  m_conn_opts.username = choices.sUserName.c_str();
-  m_conn_opts.password = choices.sPassword.c_str();
+  m_conn_opts.username = m_config.sUserName.c_str();
+  m_conn_opts.password = m_config.sPassword.c_str();
 
   int rc;
 
   rc = MQTTClient_create(
-    &m_clientMqtt, m_sMqttUrl.c_str(), choices.sId.c_str(),
+    &m_clientMqtt, sMqttUrl.c_str(), m_config.sId.c_str(),
     MQTTCLIENT_PERSISTENCE_NONE, nullptr
     );
 
@@ -78,7 +94,6 @@ Mqtt::Mqtt( const Config& choices )
     m_state = EState::connecting;
     Connect();
   }
-
 }
 
 Mqtt::~Mqtt() {
@@ -220,5 +235,4 @@ void Mqtt::DeliveryComplete( void* context, MQTTClient_deliveryToken token ) {
   }
 }
 
-} // namespace mqtt
 } // namespace ou
