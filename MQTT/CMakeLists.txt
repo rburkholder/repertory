@@ -18,6 +18,8 @@ set(
     mqtt.cpp
   )
 
+set(DEF_OUTPUT_NAME ou_${PROJECT_NAME})
+
 set(DEF_LIB_Shared ${PROJECT_NAME}_shared)
 
 add_library(
@@ -30,7 +32,7 @@ set_target_properties(
   ${DEF_LIB_Shared}
     PROPERTIES
       PUBLIC_HEADER "${file_hpp_public}"
-      OUTPUT_NAME "ou_mqtt"
+      OUTPUT_NAME ${DEF_OUTPUT_NAME}
       #DEBUG_POSTFIX "_d"
   )
 
@@ -53,7 +55,7 @@ set_target_properties(
   ${DEF_LIB_Static}
     PROPERTIES
       PUBLIC_HEADER "${file_hpp_public}"
-      OUTPUT_NAME "ou_mqtt"
+      OUTPUT_NAME ${DEF_OUTPUT_NAME}
       #DEBUG_POSTFIX "_d"
   )
 
