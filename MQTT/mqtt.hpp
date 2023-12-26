@@ -35,8 +35,6 @@
 
 #include "config.hpp"
 
-// NOTE: config::Values needs to be long-lived
-
 namespace ou {
 namespace mqtt {
 
