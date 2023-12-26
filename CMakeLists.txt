@@ -38,3 +38,4 @@ add_subdirectory(MQTT)
 add_subdirectory(Telegram)
 
 # sudo cmake --build . --target install
+# pushd build; sudo cmake --build . --target install; popd
