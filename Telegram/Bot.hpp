@@ -19,6 +19,8 @@
  * Created: February 17, 2023 18:22:02
  */
 
+#pragma once
+
 #include <string>
 #include <thread>
 
