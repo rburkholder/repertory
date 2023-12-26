@@ -37,6 +37,8 @@ set(
     Bot.cpp
 )
 
+if(OU_USE_STATIC_LIB)
+
 set(DEF_LIB_Shared ${PROJECT_NAME}_shared)
 
 add_library(
@@ -61,6 +63,10 @@ target_link_libraries(
     crypto
     ssl
   )
+
+endif() #OU_USE_STATIC_LIB
+
+if(OU_USE_STATIC_LIB)
 
 target_compile_definitions(${DEF_LIB_Shared} PUBLIC BOOST_LOG_DYN_LINK )
 
@@ -88,6 +94,8 @@ target_link_libraries(
     crypto
     ssl
   )
+
+endif() #OU_USE_STATIC_LIB
 
 target_compile_definitions(${DEF_LIB_Static} PUBLIC BOOST_LOG_DYN_LINK )
 

@@ -20,6 +20,8 @@ set(
 
 set(DEF_OUTPUT_NAME ou_${PROJECT_NAME})
 
+if(OU_USE_SHARED_LIB)
+
 set(DEF_LIB_Shared ${PROJECT_NAME}_shared)
 
 add_library(
@@ -33,6 +35,10 @@ target_link_libraries(
     PUBLIC
       libpaho-mqtt3c.a
   )
+
+endif() #OU_USE_SHARED_LIB
+
+if(OU_USE_STATIC_LIB)
 
 set(DEF_LIB_Static ${PROJECT_NAME}_static)
 
@@ -56,6 +62,8 @@ set_target_properties(
       OUTPUT_NAME ${DEF_OUTPUT_NAME}
       #DEBUG_POSTFIX "_d"
   )
+
+endif() #OU_USE_STATIC_LIB
 
 set(DEF_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/ou/${PROJECT_NAME})
 

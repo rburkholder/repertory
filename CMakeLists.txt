@@ -13,6 +13,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #set(CMAKE_CXX_COMPILER_ARCHITECTURE_ID "x64")
 
+option(OU_USE_MQTT       "enable MQTT build"              ON)
+option(OU_USE_Telegram   "enable Telegram build"          ON)
+option(OU_USE_STATIC_LIB "enable build of static library" ON)
+option(OU_USE_SHARED_LIB "enable build of shared library" ON)
+
 message(STATUS "Build type set to ${CMAKE_BUILD_TYPE}")
 message(STATUS "${PROJECT_NAME} will be installed to ${CMAKE_INSTALL_PREFIX}")
 
@@ -34,8 +39,13 @@ foreach(p LIB BIN INCLUDE CMAKE)
   unset(_path)
 endforeach()
 
-add_subdirectory(MQTT)
-add_subdirectory(Telegram)
+if(OU_USE_MQTT)
+  add_subdirectory(MQTT)
+endif()
+
+if(OU_USE_Telegram)
+  add_subdirectory(Telegram)
+endif()
 
 # sudo cmake --build . --target install
 # pushd build; sudo cmake --build . --target install; popd
