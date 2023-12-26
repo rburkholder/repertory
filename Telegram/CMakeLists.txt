@@ -17,8 +17,6 @@ set(BOOST_LIBRARYDIR "/usr/local/lib")
 
 #find_package(Boost 1.81.0 REQUIRED COMPONENTS program_options thread filesystem log)
 find_package(Boost REQUIRED COMPONENTS log)
-#telegram:
-find_package(Td 1.8.11 REQUIRED)
 
 set(DEF_OUTPUT_NAME ou_${PROJECT_NAME})
 
