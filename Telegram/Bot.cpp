@@ -306,7 +306,7 @@ void Bot::PollUpdate( uint64_t offset ) {
               }
               else {
                 // Bot::PollUpdate {"ok":false,"error_code":429,"description":"Too Many Requests: retry after 5","parameters":{"retry_after":5}}
-                BOOST_LOG_TRIVIAL(error) << "Bot::PollUpdate bOk false, message: " << message;
+                BOOST_LOG_TRIVIAL(warning) << "Bot::PollUpdate message: " << message;
                 // TODO: track time of last message, how can we be sending too many too fast?
               }
 
@@ -325,8 +325,9 @@ void Bot::PollUpdate( uint64_t offset ) {
         }
         else {
           switch ( ec ) {
-            case 1: // The socket was closed due to a timeout [as expected]
-            case 2: // Host not found (non-authoritative), try again later
+            case   1: // The socket was closed due to a timeout [as expected]
+            case   2: // os.on_resolve: (2)Host not found (non-authoritative), try again later
+            case 113: // os.on_connect: (113) No route to host
               PollUpdate( 0 ); // perform another poll
               break;
             default:
