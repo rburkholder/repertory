@@ -376,6 +376,7 @@ void Bot::SendMessage( const std::string& sMessage) {
 
 // this isn't actually required, as the update message has anything with '/' decoded as bot_command
 // but is useful as Telegram client can provide help based upon the command list
+// emplace an f_Command_t into each command registered.  have a default available.
 void Bot::SetMyCommands() {
   if ( m_pWorkGuard ) {
     json::object BotCommand;
