@@ -203,25 +203,6 @@ Bot::~Bot() {
   }
 }
 
-void Bot::SetCommand( fCommand_t&& f ) {
-  m_fCommand = std::move( f );
-}
-
-void Bot::GetMe() {
-  if ( m_pWorkGuard ) {
-    auto request = std::make_shared<bot::session::one_shot>( asio::make_strand( m_io ), m_ssl_context );
-    request->get(
-      c_sHost, c_sPort
-    , m_sToken
-    , "getMe"
-    , [this]( bool bStatus, int ec, const std::string& message ){
-        BOOST_LOG_TRIVIAL(info) << message;
-      }
-    );
-
-  }
-}
-
 void Bot::PollUpdate( uint64_t offset ) {
   if ( m_pWorkGuard ) {
 
@@ -375,14 +356,19 @@ void Bot::SendMessage( const std::string& sMessage) {
   }
 }
 
+void Bot::SetCommand( fCommand_t&& f ) {
+  m_fCommand = std::move( f );
+}
+
 // this isn't actually required, as the update message has anything with '/' decoded as bot_command
 // but is useful as Telegram client can provide help based upon the command list
 // emplace an f_Command_t into each command registered.  have a default available.
 void Bot::SetMyCommands() {
   if ( m_pWorkGuard ) {
-    json::object BotCommand;
-    json::array BotCommandList;
 
+    json::array  BotCommandList;
+
+    json::object BotCommand;
     BotCommand[ "command" ] = "status";
     BotCommand[ "description" ] = "message latest responses";
     BotCommandList.emplace_back( BotCommand );
@@ -392,7 +378,7 @@ void Bot::SetMyCommands() {
 
     json::object Parameters;
     Parameters[ "commands" ] = BotCommandList;
-    Parameters[ "scope"] = BotCommandScope;
+    Parameters[ "scope"]     = BotCommandScope;
 
     std::string sRequest = json::serialize( Parameters );
     //std::cout << "setMyCommands request='" << sRequest << "'" << std::endl;
@@ -410,36 +396,20 @@ void Bot::SetMyCommands() {
   }
 }
 
+void Bot::GetMe() {
+  if ( m_pWorkGuard ) {
+    auto request = std::make_shared<bot::session::one_shot>( asio::make_strand( m_io ), m_ssl_context );
+    request->get(
+      c_sHost, c_sPort
+    , m_sToken
+    , "getMe"
+    , [this]( bool bStatus, int ec, const std::string& message ){
+        BOOST_LOG_TRIVIAL(info) << message;
+      }
+    );
+
+  }
+}
+
 } // namespace telegram
 } // namespace ou
-
-/*
-'{"ok":true,
-  "result":[
-    {"update_id":771878720,
-      "message":
-        {"message_id":2,
-          "from":{
-              "id":5467345437,
-              "is_bot":false,
-              "first_name":"Raymond",
-              "last_name":"Burkholder",
-              "username":"OneUnified",
-              "language_code":"en"
-              },
-          "chat":{
-            "id":5467345437,
-            "first_name":"Raymond",
-            "last_name":"Burkholder",
-            "username":"OneUnified",
-            "type":"private"
-            },
-          "date":1676791780,
-          "text":"Test"
-          }
-        }
-      ]
-    }
-'
-
-*/
