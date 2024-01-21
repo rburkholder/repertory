@@ -23,6 +23,7 @@
 
 #include <string>
 #include <thread>
+#include <unordered_map>
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/executor_work_guard.hpp>
@@ -48,7 +49,8 @@ public:
   void SendMessage( const std::string& );
 
   using fCommand_t = std::function<void( const std::string& )>;
-  void SetCommand( fCommand_t&& );
+  void SetCommand( const std::string&& sName, const std::string&& sDescription, bool bPost, fCommand_t&& );
+  void DelCommand( const std::string&  sName );
 
 protected:
 private:
@@ -67,7 +69,16 @@ private:
 
   pWorkGuard_t m_pWorkGuard;
 
-  fCommand_t m_fCommand;
+  struct Command {
+    std::string sDescription;
+    fCommand_t fCommand;
+    Command( const std::string&& sDescription_, fCommand_t&& fCommand_ )
+    : sDescription( std::move( sDescription_ ) ), fCommand( std::move( fCommand_ ) )
+    {}
+  };
+
+  using mapCommand_t = std::unordered_map<std::string,Command>;
+  mapCommand_t m_mapCommand;
 
   void PollUpdate( uint64_t offset );
   void PollUpdates();

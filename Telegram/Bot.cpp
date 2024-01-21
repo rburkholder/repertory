@@ -180,7 +180,6 @@ Bot::Bot( const std::string& sToken )
 : m_sToken( sToken )
 , m_idChat {}
 , m_ssl_context( ssl::context::tlsv12_client )
-, m_fCommand( nullptr )
 {
   // This holds the root certificate used for verification
   // NOTE: this needs to be fixed, based upon comments in the include header
@@ -193,7 +192,7 @@ Bot::Bot( const std::string& sToken )
   m_thread = std::move( std::thread( [this](){ m_io.run(); } ) );
 
   PollUpdates();
-  SetMyCommands();
+  SetMyCommands(); // should remove existing ones
 }
 
 Bot::~Bot() {
@@ -260,8 +259,16 @@ void Bot::PollUpdate( uint64_t offset ) {
                           << "bot_command=" << s
                           ;
                         try {
-                          if ( m_fCommand ) {
-                            m_fCommand( s );
+                          assert( '/' == s[ 0 ] );
+                          const std::string cmd( s.substr( 1 ) ); // NOTE: may need to parse the beginning if parameters are sent  '/start airplane'
+                          mapCommand_t::const_iterator iterCommand = m_mapCommand.find( cmd );
+                          if ( m_mapCommand.end() == iterCommand ) {
+                            BOOST_LOG_TRIVIAL(error) << "cannot find entry for command " << s;
+                          }
+                          else {
+                            if ( iterCommand->second.fCommand ) {
+                              iterCommand->second.fCommand( cmd );
+                            }
                           }
                         }
                         catch(...) {
@@ -356,29 +363,74 @@ void Bot::SendMessage( const std::string& sMessage) {
   }
 }
 
-void Bot::SetCommand( fCommand_t&& f ) {
-  m_fCommand = std::move( f );
+void Bot::SetCommand( const std::string&& sName, const std::string&& sDescription, bool bPost, fCommand_t&& f ) {
+
+  // https://core.telegram.org/bots/api#botcommand
+
+  assert( 1 <= sName.size() );
+  assert( '/' != sName[ 0 ] );
+  assert( 99 >= m_mapCommand.size() );
+  // sName an contain only lowercase English letters, digits and underscores.
+
+  mapCommand_t::iterator iterCommand = m_mapCommand.find( sName );
+  if ( m_mapCommand.end() == iterCommand ) {
+    m_mapCommand.emplace( mapCommand_t::value_type( std::move( sName) , std::move( Command( std::move( sDescription ), std::move( f ) ) ) ) );
+  }
+  else {
+    iterCommand->second.fCommand = std::move( f );
+  }
+
+  if ( bPost ) {
+    SetMyCommands();
+  }
+}
+
+void Bot::DelCommand( const std::string& sName ) {
+
+  mapCommand_t::iterator iterCommand = m_mapCommand.find( sName );
+  if ( m_mapCommand.end() == iterCommand ) {
+    m_mapCommand.erase( iterCommand );
+    SetMyCommands();
+  }
 }
 
 // this isn't actually required, as the update message has anything with '/' decoded as bot_command
 // but is useful as Telegram client can provide help based upon the command list
 // emplace an f_Command_t into each command registered.  have a default available.
+
+// https://core.telegram.org/bots/features#global-commands
+// /start, /help, /settings are recommended Telegram global commands with special meaning
+
+// https://core.telegram.org/bots/api#setmycommands
+
 void Bot::SetMyCommands() {
   if ( m_pWorkGuard ) {
 
-    json::array  BotCommandList;
+    std::string sCommand;
+    json::object Parameters;
 
-    json::object BotCommand;
-    BotCommand[ "command" ] = "status";
-    BotCommand[ "description" ] = "message latest responses";
-    BotCommandList.emplace_back( BotCommand );
+    if ( 0 == m_mapCommand.size() ) {
+      sCommand = "deleteMyCommands";
+    }
+    else {
+
+      sCommand = "setMyCommands";
+
+      json::array  BotCommandList;
+
+      for ( const mapCommand_t::value_type& vt: m_mapCommand ) {
+        json::object BotCommand;
+        BotCommand[ "command" ] = vt.first;
+        BotCommand[ "description" ] = vt.second.sDescription;
+        BotCommandList.emplace_back( BotCommand );
+      }
+
+      Parameters[ "commands" ] = BotCommandList;
+    }
 
     json::object BotCommandScope;
     BotCommandScope[ "type" ] = "default";
-
-    json::object Parameters;
-    Parameters[ "commands" ] = BotCommandList;
-    Parameters[ "scope"]     = BotCommandScope;
+    Parameters[ "scope"]      = BotCommandScope;
 
     std::string sRequest = json::serialize( Parameters );
     //std::cout << "setMyCommands request='" << sRequest << "'" << std::endl;
@@ -387,7 +439,7 @@ void Bot::SetMyCommands() {
     request->post(
       c_sHost, c_sPort
     , m_sToken
-    , "setMyCommands"
+    , sCommand
     , sRequest
     , [this]( bool bStatus, int ec, const std::string& message ){
         //std::cout << "telegram setMyCommands response: " << message << std::endl;
