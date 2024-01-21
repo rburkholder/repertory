@@ -19,7 +19,8 @@
  * Created: December 24, 2023 17:56:30
  */
 
-// need to backport to nut2mqtt
+// 2024/01/20 maybe replace with https://github.com/mireo/async-mqtt5
+//   but rabbitmq supports mqtt 3.1.1 only
 
 #pragma once
 
