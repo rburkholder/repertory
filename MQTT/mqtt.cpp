@@ -57,7 +57,7 @@ Mqtt::Mqtt( mqtt::Config&& choices )
 
 void Mqtt::Init() {
 
-  const std::string sMqttUrl("tcp://" + m_config.sHost + ":1883" );
+  const std::string sMqttUrl("tcp://" + m_config.sHost + ':' + m_config.sPort );
 
   m_conn_opts.keepAliveInterval = 20;
   m_conn_opts.cleansession = 1;
