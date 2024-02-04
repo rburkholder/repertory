@@ -35,7 +35,9 @@ struct Config {
   std::string sPassword; // password
   std::string sTopic;    // topic, should not have leading slash
 
-  Config() {}
+  Config()
+  : sPort( "1883" )
+  {}
 
   Config(
     const std::string& sId_

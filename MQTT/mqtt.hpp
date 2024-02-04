@@ -48,10 +48,12 @@ public:
   };
 
   Mqtt( const mqtt::Config& );
+  Mqtt( const mqtt::Config&, const std::string& sId );
   Mqtt( mqtt::Config&& );
   ~Mqtt();
 
   using fPublishComplete_t = std::function<void(bool,int)>;
+  void Publish( const std::string_view& svTopic, const std::string_view& svMessage, fPublishComplete_t&& );
   void Publish( const std::string& sTopic, const std::string& sMessage, fPublishComplete_t&& );
 
   // send and forget, errors are simply logged
@@ -62,15 +64,15 @@ public:
 protected:
 private:
 
-  enum class EState{ init, created, connecting, connected, start_reconnect, retry_connect, disconnecting, destruct } m_state;
+  enum class EState{ init, created, connecting, connected, start_reconnect, retry_connect, disconnecting, destruct };
+
+  EState m_state;
 
   mqtt::Config m_config;
 
   std::thread m_threadConnect;
 
   MQTTClient m_clientMqtt;
-  MQTTClient_connectOptions m_conn_opts;
-  MQTTClient_message m_pubmsg;
 
   std::mutex m_mutexDeliveryToken;
 
@@ -79,7 +81,7 @@ private:
 
   fMessage_t m_fMessage;
 
-  void Init();
+  void Init( const std::string& sId );
 
   static int MessageArrived( void* context, char* topicName, int topicLen, MQTTClient_message* message );
   static void DeliveryComplete( void* context, MQTTClient_deliveryToken token );

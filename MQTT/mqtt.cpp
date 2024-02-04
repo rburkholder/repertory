@@ -38,56 +38,67 @@ namespace ou {
 Mqtt::Mqtt( const mqtt::Config& choices )
 : m_state( EState::init )
 , m_config( choices )
-, m_conn_opts( MQTTClient_connectOptions_initializer )
-, m_pubmsg( MQTTClient_message_initializer )
 , m_fMessage( nullptr )
 {
-  Init();
+  Init( choices.sId );
+}
+
+Mqtt::Mqtt( const mqtt::Config& choices, const std::string& sId )
+: m_state( EState::init )
+, m_config( choices )
+, m_fMessage( nullptr )
+{
+  Init( sId );
 }
 
 Mqtt::Mqtt( mqtt::Config&& choices )
 : m_state( EState::init )
 , m_config( std::move( choices ) )
-, m_conn_opts( MQTTClient_connectOptions_initializer )
-, m_pubmsg( MQTTClient_message_initializer )
 , m_fMessage( nullptr )
 {
-  Init();
+  Init( choices.sId );
 }
 
-void Mqtt::Init() {
+void Mqtt::Init( const std::string& sId ) {
 
   const std::string sMqttUrl("tcp://" + m_config.sHost + ':' + m_config.sPort );
 
-  m_conn_opts.keepAliveInterval = 20;
-  m_conn_opts.cleansession = 1;
-  m_conn_opts.connectTimeout = c_nTimeOut;
-  m_conn_opts.username = m_config.sUserName.c_str();
-  m_conn_opts.password = m_config.sPassword.c_str();
+  MQTTClient_connectOptions options = MQTTClient_connectOptions_initializer;
+  options.keepAliveInterval = 20;
+  options.cleansession = 1;
+  options.reliable = 0;
+  options.connectTimeout = c_nTimeOut;
+  options.username = m_config.sUserName.c_str();
+  options.password = m_config.sPassword.c_str();
 
-  int rc;
+  int result;
 
-  rc = MQTTClient_create(
-    &m_clientMqtt, sMqttUrl.c_str(), m_config.sId.c_str(),
+  result = MQTTClient_create(
+    &m_clientMqtt, sMqttUrl.c_str(), sId.c_str(),
     MQTTCLIENT_PERSISTENCE_NONE, nullptr
     );
 
-  if ( MQTTCLIENT_SUCCESS != rc ) {
-    throw( runtime_error( "Failed to create client", rc ) );
+  //std::cout << "ou::mqtt create status " << result << std::endl;
+
+  if ( MQTTCLIENT_SUCCESS != result ) {
+    throw( runtime_error( "Failed to create client", result ) );
   }
 
   m_state = EState::created;
 
-  rc = MQTTClient_setCallbacks( m_clientMqtt, this, &Mqtt::ConnectionLost, &Mqtt::MessageArrived, &Mqtt::DeliveryComplete );
+  result = MQTTClient_setCallbacks( m_clientMqtt, this, &Mqtt::ConnectionLost, &Mqtt::MessageArrived, &Mqtt::DeliveryComplete );
+  assert( MQTTCLIENT_SUCCESS == result ); // MQTTCLIENT_FAILURE  on error
 
   try {
-    rc = MQTTClient_connect( m_clientMqtt, &m_conn_opts );
+    result = MQTTClient_connect( m_clientMqtt, &options );
   }
   catch (...) {
     std::cerr << "mqtt initial connect broken" << std::endl;
   }
 
-  if ( MQTTCLIENT_SUCCESS == rc ) {
+  //std::cout << "ou::mqtt connect status " << result << std::endl;
+
+  if ( MQTTCLIENT_SUCCESS == result ) {
     m_state = EState::connected;
   }
   else {
@@ -133,13 +144,22 @@ void Mqtt::Connect() {
       [this](){
         while ( EState::retry_connect == m_state ) {
           try {
-            int rc = MQTTClient_connect( m_clientMqtt, &m_conn_opts );
-            if ( MQTTCLIENT_SUCCESS == rc ) {
+
+            MQTTClient_connectOptions options = MQTTClient_connectOptions_initializer;
+            options.keepAliveInterval = 20;
+            options.cleansession = 1;
+            options.reliable = 0;
+            options.connectTimeout = c_nTimeOut;
+            options.username = m_config.sUserName.c_str();
+            options.password = m_config.sPassword.c_str();
+
+            int result = MQTTClient_connect( m_clientMqtt, &options );
+            if ( MQTTCLIENT_SUCCESS == result ) {
               m_state = EState::connected;
               std::cout << "mqtt re-connected" << std::endl;
             }
             else {
-              //std::cerr << "mqtt reconnect wait" << std::endl;
+              std::cerr << "mqtt reconnect wait" << std::endl;
               std::this_thread::sleep_for( std::chrono::milliseconds( 1000 ) );
             }
           }
@@ -152,15 +172,20 @@ void Mqtt::Connect() {
 }
 
 void Mqtt::Publish( const std::string& sTopic, const std::string& sMessage, fPublishComplete_t&& fPublishComplete ) {
+  const std::string_view svTopic( sTopic );
+  const std::string_view svMessage( sMessage );
+  Publish( svTopic, svMessage, std::move( fPublishComplete ) );
+}
+
+void Mqtt::Publish( const std::string_view& svTopic, const std::string_view& svMessage, fPublishComplete_t&& fPublishComplete ) {
+
   if ( EState::connected == m_state ) {
-    m_pubmsg.payload = (void*) sMessage.begin().base();
-    m_pubmsg.payloadlen = sMessage.size();
-    m_pubmsg.qos = c_nQOS;
-    m_pubmsg.retained = 0;
     MQTTClient_deliveryToken token;
-    int rc = MQTTClient_publishMessage( m_clientMqtt, sTopic.c_str(), &m_pubmsg, &token );
-    if ( MQTTCLIENT_SUCCESS != rc ) {
-      fPublishComplete( false, rc );
+
+    int result = MQTTClient_publish( m_clientMqtt, svTopic.begin(), svMessage.size(), svMessage.begin(), c_nQOS, 0, &token );
+
+    if ( MQTTCLIENT_SUCCESS != result ) {
+      fPublishComplete( false, result );
       //throw( runtime_error( "Failed to publish message", rc ) );
     }
     else {
@@ -182,8 +207,9 @@ void Mqtt::Publish( const std::string& sTopic, const std::string& sMessage, fPub
 void Mqtt::Subscribe( const std::string_view& topic, fMessage_t&& fMessage ) {
   m_fMessage = std::move( fMessage );
   assert( m_clientMqtt );
+  assert( EState::connected == m_state );
   // TODO: memory leaks on topic?
-  int result = MQTTClient_subscribe( m_clientMqtt, topic.begin(), 1 );
+  int result = MQTTClient_subscribe( m_clientMqtt, topic.begin(), c_nQOS );
   assert( MQTTCLIENT_SUCCESS == result );
 }
 
