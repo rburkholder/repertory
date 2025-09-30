@@ -7,7 +7,20 @@ Two libraries:
 
 Installation:
 
+    git clone https://github.com/rburkholder/libs-build.git
+    cd libs-build
+
+    ./build.sh base
+    ./build.sh zlib
+    ./build.sh boost
+
+    cd ..
+
+    sudo apt install libssl-dev
     sudo apt install libpaho-mqtt-dev
+
+    git clone https://github.com/rburkholder/repertory
+    cd repertory
 
     mkdir build
     cd build
@@ -17,6 +30,6 @@ Installation:
     -D OU_USE_STATIC_LIB=ON \
     -D OU_USE_SHARED_LIB=OFF \
     -D OU_USE_MQTT=ON \
-    -D OU_USE_Telegram=OFF \
+    -D OU_USE_Telegram=ON \
     ..
     sudo cmake --build . --target=install
