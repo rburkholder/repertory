@@ -1,11 +1,12 @@
+cmake_minimum_required(VERSION 3.14)
+
 cmake_policy(SET CMP0048 NEW)
+cmake_policy(SET CMP0167 NEW)
 
 project(
   Repertory
     LANGUAGES CXX
   )
-
-cmake_minimum_required(VERSION 3.14)
 
 # <<< General set up >>>
 set(CMAKE_CXX_STANDARD 17)
