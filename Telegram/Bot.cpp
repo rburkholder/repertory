@@ -24,7 +24,6 @@
 
 #include <vector>
 #include <stdexcept>
-#include <functional>
 #include <string_view>
 
 #include <boost/json.hpp>
@@ -226,7 +225,7 @@ void Bot::PollUpdate( uint64_t offset ) {
           try {
 
             uint64_t offset {};
-            json::error_code jec;
+            boost::system::error_code jec;
             json::value jv = json::parse( message, jec );
 
             if ( jec.failed() ) {

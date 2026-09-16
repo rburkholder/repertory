@@ -23,6 +23,7 @@
 
 #include <string>
 #include <thread>
+#include <functional>
 #include <unordered_map>
 
 #include <boost/asio/io_context.hpp>
