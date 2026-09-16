@@ -287,6 +287,8 @@ void one_shot::delete_(
   );
 }
 
+// ===== private
+
 void one_shot::on_resolve(
   beast::error_code ec,
   tcp::resolver::results_type results
