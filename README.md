@@ -9,19 +9,19 @@ Two libraries:
 Installation:
 ```bash
 git clone https://github.com/rburkholder/libs-build.git
-cd libs-build
+pushd libs-build
 
 ./build.sh base
 ./build.sh zlib
 ./build.sh boost
 
-cd ..
+popd
 
 sudo apt install libssl-dev
 sudo apt install libpaho-mqtt-dev
 
 git clone https://github.com/rburkholder/repertory
-cd repertory
+pushd repertory
 
 mkdir build
 cd build
@@ -34,6 +34,8 @@ cmake \
 -D OU_USE_REST=ON \
 ..
 sudo cmake --build . --target=install
+
+popd
 ```
 
 
