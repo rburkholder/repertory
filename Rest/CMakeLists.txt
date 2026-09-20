@@ -1,5 +1,5 @@
 project(
-  telegram
+  rest
   VERSION 1.1.0
   )
 
@@ -21,7 +21,7 @@ set(DEF_OUTPUT_NAME ou_${PROJECT_NAME})
 
 set(
   file_hpp_public
-    Bot.hpp
+    telegram.hpp
     handler.hpp
     root_certificates.hpp
   )
@@ -33,7 +33,7 @@ set(
 
 set(
   file_cpp
-    Bot.cpp
+    telegram.cpp
     one_shot.cpp
     handler.cpp
 )

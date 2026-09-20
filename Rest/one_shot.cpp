@@ -26,9 +26,7 @@
 #include "one_shot.hpp"
 
 namespace ou {
-namespace telegram {
-namespace bot {
-namespace session {
+namespace rest {
 
 namespace { // anonymous
 
@@ -93,7 +91,6 @@ void one_shot::run(
 void one_shot::get(
   const std::string& sHost
 , const std::string& sPort
-, const std::string& sTelegramToken
 , const std::string& sTarget
 , fDone_t&& fDone
 ) {
@@ -118,9 +115,9 @@ void one_shot::get(
   request.set( http::field::user_agent, sUserAgent );
 
   //m_request_empty.target( sTarget );
-  const std::string s( "/bot" + sTelegramToken + "/" + sTarget );
+  //const std::string s( "/bot" + sTelegramToken + "/" + sCommand );
   //BOOST_LOG_TRIVIAL(info) << "get request: '" << s << "'";
-  request.target( s );
+  request.target( sTarget );
 
   // Look up the domain name
   m_resolver.async_resolve(
@@ -138,8 +135,7 @@ void one_shot::get(
 void one_shot::get(
   const std::string& sHost
 , const std::string& sPort
-, const std::string& sTelegramToken
-, const std::string& sCommand
+, const std::string& sTarget
 , const std::string& sBody
 , fDone_t&& fDone
 ) {
@@ -164,7 +160,7 @@ void one_shot::get(
   request.set( http::field::user_agent, sUserAgent );
   request.set( http::field::content_type, "application/json" );
 
-  const std::string sTarget( "/bot" + sTelegramToken + "/" + sCommand );
+  //const std::string sTarget( "/bot" + sTelegramToken + "/" + sCommand );
   //BOOST_LOG_TRIVIAL(info) << "get request: '" << s << "'";
   request.target( sTarget );
 
@@ -187,8 +183,7 @@ void one_shot::get(
 void one_shot::post(
   const std::string& sHost
 , const std::string& sPort
-, const std::string& sTelegramToken
-, const std::string& sCommand
+, const std::string& sTarget
 , const std::string& sBody
 , fDone_t&& fDone
 ) {
@@ -213,7 +208,7 @@ void one_shot::post(
   request.set( http::field::user_agent, sUserAgent );
   request.set( http::field::content_type, "application/json" );
 
-  const std::string sTarget( "/bot" + sTelegramToken + "/" + sCommand );
+  //const std::string sTarget( "/bot" + sTelegramToken + "/" + sCommand );
   //BOOST_LOG_TRIVIAL(info) << "post target: '" << sTarget << "'";
   request.target( sTarget );
 
@@ -277,7 +272,5 @@ void one_shot::delete_(
   );
 }
 
-} // namespace session
-} // namespace bot
-} // namespace telegram
+} // namespace rest
 } // namespace ou

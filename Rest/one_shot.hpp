@@ -24,9 +24,7 @@
 #include "handler.hpp"
 
 namespace ou {
-namespace telegram {
-namespace bot {
-namespace session {
+namespace rest {
 
 // https://www.boost.org/doc/libs/1_79_0/libs/beast/example/http/client/async-ssl/http_client_async_ssl.cpp
 class one_shot : ou::rest::handler {
@@ -48,7 +46,6 @@ public:
   void get(
     const std::string& sHost
   , const std::string& sPort
-  , const std::string& sTelegramToken
   , const std::string& sTarget
   , fDone_t&&
   );
@@ -56,7 +53,6 @@ public:
   void get(
     const std::string& sHost
   , const std::string& sPort
-  , const std::string& sTelegramToken
   , const std::string& sTarget
   , const std::string& sBody
   , fDone_t&&
@@ -65,7 +61,6 @@ public:
   void post(
     const std::string& sHost
   , const std::string& sPort
-  , const std::string& sTelegramToken
   , const std::string& sTarget
   , const std::string& sBody
   , fDone_t&&
@@ -74,7 +69,6 @@ public:
   void patch(
     const std::string& sHost
   , const std::string& sPort
-  , const std::string& sTelegramToken
   , const std::string& sTarget
   , const std::string& sBody
   , fDone_t&&
@@ -90,7 +84,5 @@ public:
 private:
 };
 
-} // namespace session
-} // namespace bot
-} // namespace telegram
+} // namespace rest
 } // namespace ou

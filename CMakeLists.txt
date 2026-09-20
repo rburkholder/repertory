@@ -15,7 +15,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #set(CMAKE_CXX_COMPILER_ARCHITECTURE_ID "x64")
 
 option(OU_USE_MQTT       "enable MQTT build"              ON)
-option(OU_USE_Telegram   "enable Telegram build"          ON)
+option(OU_USE_REST       "enable REST build"              ON)
 option(OU_USE_STATIC_LIB "enable build of static library" ON)
 option(OU_USE_SHARED_LIB "enable build of shared library" ON)
 
@@ -44,8 +44,8 @@ if(OU_USE_MQTT)
   add_subdirectory(MQTT)
 endif()
 
-if(OU_USE_Telegram)
-  add_subdirectory(Telegram)
+if(OU_USE_REST)
+  add_subdirectory(Rest)
 endif()
 
 # sudo cmake --build . --target install

@@ -34,11 +34,12 @@
 
 #include "one_shot.hpp"
 
-#include "Bot.hpp"
+#include "telegram.hpp"
 
 namespace json = boost::json;
 
 namespace ou {
+namespace rest {
 namespace telegram {
 
 static const std::string c_sHost( "api.telegram.org" );
@@ -213,11 +214,10 @@ void Bot::PollUpdate( uint64_t offset ) {
     std::string sRequest = json::serialize( UpdateRequest );
     //BOOST_LOG_TRIVIAL(trace) << "request='" << sRequest << "'";
 
-    auto request = std::make_shared<bot::session::one_shot>( asio::make_strand( m_io ), m_ssl_context );
+    auto request = std::make_shared<ou::rest::one_shot>( asio::make_strand( m_io ), m_ssl_context );
     request->get( // https://core.telegram.org/bots/api#getupdates
       c_sHost, c_sPort
-    , m_sToken
-    , "getUpdates"
+    , "/bot" + m_sToken + "/" + "getUpdates"
     , sRequest
     , [this]( bool bStatus, int ec, const std::string& message ){
         if ( bStatus ) {
@@ -348,11 +348,10 @@ void Bot::SendMessage( const std::string& sMessage) {
       //BOOST_LOG_TRIVIAL(debug) << "telegram tx: '" << sRequest << "'";
       BOOST_LOG_TRIVIAL(trace) << "telegram tx: " << sRequest;
 
-      auto request = std::make_shared<bot::session::one_shot>( asio::make_strand( m_io ), m_ssl_context );
+      auto request = std::make_shared<ou::rest::one_shot>( asio::make_strand( m_io ), m_ssl_context );
       request->post(
         c_sHost, c_sPort
-      , m_sToken
-      , "sendMessage"
+      , "/bot" + m_sToken + "/" + "sendMessage"
       , sRequest
       , [this]( bool bStatus, int ec, const std::string& message ){
           BOOST_LOG_TRIVIAL(trace) << "telegram rx: " << message;
@@ -434,11 +433,10 @@ void Bot::SetMyCommands() {
     std::string sRequest = json::serialize( Parameters );
     //std::cout << "setMyCommands request='" << sRequest << "'" << std::endl;
 
-    auto request = std::make_shared<bot::session::one_shot>( asio::make_strand( m_io ), m_ssl_context );
+    auto request = std::make_shared<ou::rest::one_shot>( asio::make_strand( m_io ), m_ssl_context );
     request->post(
       c_sHost, c_sPort
-    , m_sToken
-    , sCommand
+    , "/bot" + m_sToken + "/" + sCommand
     , sRequest
     , [this]( bool bStatus, int ec, const std::string& message ){
         //std::cout << "telegram setMyCommands response: " << message << std::endl;
@@ -449,11 +447,10 @@ void Bot::SetMyCommands() {
 
 void Bot::GetMe() {
   if ( m_pWorkGuard ) {
-    auto request = std::make_shared<bot::session::one_shot>( asio::make_strand( m_io ), m_ssl_context );
+    auto request = std::make_shared<ou::rest::one_shot>( asio::make_strand( m_io ), m_ssl_context );
     request->get(
       c_sHost, c_sPort
-    , m_sToken
-    , "getMe"
+    , "/bot" + m_sToken + "/" + "getMe"
     , [this]( bool bStatus, int ec, const std::string& message ){
         BOOST_LOG_TRIVIAL(info) << message;
       }
@@ -463,4 +460,5 @@ void Bot::GetMe() {
 }
 
 } // namespace telegram
+} // namespace rest
 } // namespace ou

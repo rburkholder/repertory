@@ -35,6 +35,7 @@ namespace asio = boost::asio; // from <boost/asio/context.hpp>
 namespace ssl  = asio::ssl;   // from <boost/asio/ssl.hpp>
 
 namespace ou {
+namespace rest {
 namespace telegram {
 
 class Bot {
@@ -89,4 +90,5 @@ private:
 };
 
 } // namespace telegram
+} // namespace rest
 } // namespace ou
