@@ -28,12 +28,14 @@ set(
 set(
   file_hpp_private
     root_certificates.hpp
+    handler.hpp
     one_shot.hpp
   )
 
 set(
   file_cpp
     one_shot.cpp
+    handler.cpp
     Bot.cpp
 )
 

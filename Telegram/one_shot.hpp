@@ -21,20 +21,7 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-
-#include <boost/beast/ssl.hpp>
-#include <boost/beast/core.hpp>
-#include <boost/beast/http.hpp>
-
-namespace asio  = boost::asio;      // from <boost/asio.hpp>
-namespace ssl   = asio::ssl;        // from <boost/asio/ssl.hpp>
-
-namespace beast = boost::beast;     // from <boost/beast.hpp>
-namespace http  = beast::http;      // from <boost/beast/http.hpp>
-
-using tcp = boost::asio::ip::tcp;   // from <boost/asio/ip/tcp.hpp>
+#include "handler.hpp"
 
 namespace ou {
 namespace telegram {
@@ -42,16 +29,14 @@ namespace bot {
 namespace session {
 
 // https://www.boost.org/doc/libs/1_79_0/libs/beast/example/http/client/async-ssl/http_client_async_ssl.cpp
-class one_shot : public std::enable_shared_from_this<one_shot> {
+class one_shot : ou::rest::handler {
 public:
 
   explicit one_shot(
-    asio::any_io_executor ex,
-    ssl::context& ssl_ctx
+    asio::any_io_executor,
+    ssl::context&
   );
   virtual ~one_shot();
-
-  using fDone_t = std::function<void(bool,int,const std::string&)>; // false, not ok; true, fine
 
   void run(
     const std::string& sHost
@@ -103,42 +88,6 @@ public:
   );
 
 private:
-
-  tcp::resolver m_resolver;
-  beast::ssl_stream<beast::tcp_stream> m_stream;
-
-  using fWriteRequest_t = std::function<void( fDone_t&& )>;
-
-  void on_resolve( fWriteRequest_t&&, fDone_t&&, beast::error_code, tcp::resolver::results_type );
-  void on_connect( fWriteRequest_t&&, fDone_t&&, beast::error_code, tcp::resolver::results_type::endpoint_type );
-  void on_handshake( fWriteRequest_t&&, fDone_t&&, beast::error_code );
-
-  using pRequestEmptyBody_t = std::shared_ptr<http::request<http::empty_body> >; // unique_ptr doesn't work in the bind
-  void write_empty( pRequestEmptyBody_t, fDone_t&& );
-  using pRequestStringBody_t = std::shared_ptr<http::request<http::string_body> >; // unique_ptr doesn't work in the bind
-  void write_body( pRequestStringBody_t, fDone_t&& );
-
-  void on_write_empty( pRequestEmptyBody_t, fDone_t&&, beast::error_code, std::size_t bytes_transferred );
-  void on_write_body( pRequestStringBody_t, fDone_t&&, beast::error_code, std::size_t bytes_transferred );
-  void on_write( fDone_t&&, beast::error_code, std::size_t bytes_transferred );
-
-  struct DataIn {
-    beast::flat_buffer m_buffer; // (Must persist between reads)
-    http::response_parser<http::string_body> m_parser;
-    DataIn() {
-     // Allow for an unlimited body size
-      m_parser.body_limit( ( std::numeric_limits<std::uint64_t>::max )() );
-    }
-    ~DataIn() {
-      m_buffer.clear();
-    }
-  };
-  using pDataIn_t = std::shared_ptr<DataIn>;
-
-  void on_read( pDataIn_t, fDone_t&&, beast::error_code, std::size_t bytes_transferred );
-
-  void on_shutdown( beast::error_code ec );
-
 };
 
 } // namespace session
