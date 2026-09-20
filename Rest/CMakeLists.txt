@@ -65,13 +65,15 @@ target_link_libraries(
     ssl
   )
 
+target_compile_definitions(${DEF_LIB_Shared} PUBLIC BOOST_LOG_DYN_LINK )
+
 endif() #OU_USE_SHARED_LIB
 
-target_compile_definitions(${DEF_LIB_Shared} PUBLIC BOOST_LOG_DYN_LINK )
 
 if(OU_USE_STATIC_LIB)
 
 set(DEF_LIB_Static ${PROJECT_NAME}_static)
+
 add_library(
   ${DEF_LIB_Static} STATIC
   ${file_hpp_public}
@@ -95,9 +97,9 @@ target_link_libraries(
     ssl
   )
 
-endif() #OU_USE_STATIC_LIB
-
 target_compile_definitions(${DEF_LIB_Static} PUBLIC BOOST_LOG_DYN_LINK )
+
+endif() #OU_USE_STATIC_LIB
 
 set(DEF_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/ou/${PROJECT_NAME})
 
