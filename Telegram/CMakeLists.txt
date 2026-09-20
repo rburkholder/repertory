@@ -1,6 +1,6 @@
 project(
   telegram
-  VERSION 1.0.0
+  VERSION 1.1.0
   )
 
 # https://cmake.org/cmake/help/v3.6/module/FindBoost.html
@@ -15,7 +15,6 @@ set(Boost_USE_STATIC_RUNTIME OFF)
 set(BOOST_INCLUDEDIR "/usr/local/include/boost")
 set(BOOST_LIBRARYDIR "/usr/local/lib")
 
-#find_package(Boost 1.81.0 REQUIRED COMPONENTS program_options thread filesystem log)
 find_package(Boost REQUIRED COMPONENTS log)
 
 set(DEF_OUTPUT_NAME ou_${PROJECT_NAME})
@@ -23,23 +22,23 @@ set(DEF_OUTPUT_NAME ou_${PROJECT_NAME})
 set(
   file_hpp_public
     Bot.hpp
+    handler.hpp
+    root_certificates.hpp
   )
 
 set(
   file_hpp_private
-    root_certificates.hpp
-    handler.hpp
     one_shot.hpp
   )
 
 set(
   file_cpp
+    Bot.cpp
     one_shot.cpp
     handler.cpp
-    Bot.cpp
 )
 
-if(OU_USE_STATIC_LIB)
+if(OU_USE_SHARED_LIB)
 
 set(DEF_LIB_Shared ${PROJECT_NAME}_shared)
 
@@ -66,14 +65,13 @@ target_link_libraries(
     ssl
   )
 
-endif() #OU_USE_STATIC_LIB
-
-if(OU_USE_STATIC_LIB)
+endif() #OU_USE_SHARED_LIB
 
 target_compile_definitions(${DEF_LIB_Shared} PUBLIC BOOST_LOG_DYN_LINK )
 
-set(DEF_LIB_Static ${PROJECT_NAME}_static)
+if(OU_USE_STATIC_LIB)
 
+set(DEF_LIB_Static ${PROJECT_NAME}_static)
 add_library(
   ${DEF_LIB_Static} STATIC
   ${file_hpp_public}
@@ -123,3 +121,4 @@ install(
   #  DESTINATION ${DEF_INCLUDE_DIR}
   #  COMPONENT dev
   )
+
