@@ -10,9 +10,8 @@
 #ifndef BOOST_BEAST_EXAMPLE_COMMON_ROOT_CERTIFICATES_HPP
 #define BOOST_BEAST_EXAMPLE_COMMON_ROOT_CERTIFICATES_HPP
 
-#include <string>
-
 #include <boost/asio/ssl.hpp>
+#include <string>
 
 /*
     PLEASE READ
@@ -41,7 +40,6 @@
 
 namespace ssl = boost::asio::ssl; // from <boost/asio/ssl.hpp>
 
-namespace ou {
 namespace detail {
 
 inline
@@ -3961,7 +3959,5 @@ load_root_certificates(ssl::context& ctx)
     if(ec)
         throw boost::system::system_error{ec};
 }
-
-} // namespace ou
 
 #endif
