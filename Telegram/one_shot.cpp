@@ -50,16 +50,11 @@ one_shot::one_shot(
 , m_stream( ex, ssl_ctx )
 {
   //BOOST_LOG_TRIVIAL(info) << "telegram_bot::one_shot construction"; // ensuring proper timing of handling
-
-  // Allow for an unlimited body size
-  m_parser.body_limit( ( std::numeric_limits<std::uint64_t>::max )() );
-  }
+}
 
 one_shot::~one_shot() {
   //BOOST_LOG_TRIVIAL(info) << "telegram_bot::one_shot destruction";  // ensuring proper timing of handling
   //m_stream.shutdown();  // doesn't like this
-  m_buffer.clear();
-  m_response.clear();
 }
 
 void one_shot::run(
@@ -430,13 +425,15 @@ void one_shot::on_write(
 
     //BOOST_LOG_TRIVIAL(info) << "os.on_write";
 
+    pDataIn_t pDataIn = std::make_shared<DataIn>();
+
     // Receive the HTTP response
     http::async_read(
-//      m_stream, m_buffer, m_response,
-      m_stream, m_buffer, m_parser,
+      m_stream, pDataIn->m_buffer, pDataIn->m_parser,
       beast::bind_front_handler(
         &one_shot::on_read,
         shared_from_this(),
+        std::move( pDataIn ),
         std::move( fDone )
       )
     );
@@ -461,7 +458,7 @@ void one_shot::on_write(
 
 */
 
-void one_shot::on_read( fDone_t&& fDone, beast::error_code ec, std::size_t bytes_transferred ) {
+void one_shot::on_read( pDataIn_t pDataIn, fDone_t&& fDone, beast::error_code ec, std::size_t bytes_transferred ) {
 
   boost::ignore_unused( bytes_transferred );
 
@@ -477,14 +474,16 @@ void one_shot::on_read( fDone_t&& fDone, beast::error_code ec, std::size_t bytes
   }
   else {
 
+    DataIn& data( *pDataIn );
+
     //BOOST_LOG_TRIVIAL(info) << "os.on_read";
     //BOOST_LOG_TRIVIAL(info) << "get():" << m_parser.get();
-    auto body = m_parser.get().body();
     //BOOST_LOG_TRIVIAL(info) << "body():" << m_parser.get().body();
+    const auto& body = pDataIn->m_parser.get().body();
 
-    //m_fDone( true, m_response.body() );
     fDone( true, ec.value(), body );
     // Set a timeout on the operation
+
     beast::get_lowest_layer( m_stream ).expires_after( std::chrono::seconds( 15 ) );
 
     // Gracefully close the stream - can the stream be re-used?

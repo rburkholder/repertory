@@ -105,11 +105,7 @@ public:
 private:
 
   tcp::resolver m_resolver;
-  beast::flat_buffer m_buffer; // (Must persist between reads)
   beast::ssl_stream<beast::tcp_stream> m_stream;
-
-  http::response<http::string_body> m_response;
-  http::response_parser<http::string_body> m_parser;
 
   using fWriteRequest_t = std::function<void( fDone_t&& )>;
 
@@ -125,7 +121,21 @@ private:
   void on_write_empty( pRequestEmptyBody_t, fDone_t&&, beast::error_code, std::size_t bytes_transferred );
   void on_write_body( pRequestStringBody_t, fDone_t&&, beast::error_code, std::size_t bytes_transferred );
   void on_write( fDone_t&&, beast::error_code, std::size_t bytes_transferred );
-  void on_read( fDone_t&&, beast::error_code, std::size_t bytes_transferred );
+
+  struct DataIn {
+    beast::flat_buffer m_buffer; // (Must persist between reads)
+    http::response_parser<http::string_body> m_parser;
+    DataIn() {
+     // Allow for an unlimited body size
+      m_parser.body_limit( ( std::numeric_limits<std::uint64_t>::max )() );
+    }
+    ~DataIn() {
+      m_buffer.clear();
+    }
+  };
+  using pDataIn_t = std::shared_ptr<DataIn>;
+
+  void on_read( pDataIn_t, fDone_t&&, beast::error_code, std::size_t bytes_transferred );
 
   void on_shutdown( beast::error_code ec );
 
