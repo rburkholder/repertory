@@ -50,7 +50,6 @@ one_shot::one_shot(
 )
 : m_resolver( ex )
 , m_stream( ex, ssl_ctx )
-, m_fWriteRequest( nullptr )
 , m_fDone( nullptr )
 {
   //BOOST_LOG_TRIVIAL(info) << "telegram_bot::one_shot construction"; // ensuring proper timing of handling
@@ -64,7 +63,6 @@ one_shot::~one_shot() {
   //m_stream.shutdown();  // doesn't like this
   m_buffer.clear();
   m_response.clear();
-  m_fWriteRequest = nullptr;
   m_fDone = nullptr;
 }
 
@@ -73,7 +71,6 @@ void one_shot::run(
 , const std::string& sPort
 , const std::string& sTarget
 , int version
-, const std::string& sTelegramToken
 ) {
   // Set SNI Hostname (many hosts need this to handshake successfully)
   if( !SSL_set_tlsext_host_name( m_stream.native_handle(), sHost.c_str() ) )
@@ -94,7 +91,6 @@ void one_shot::run(
   //req_.body() = json::serialize( jv );
   //req_.prepare_payload();
 
-  m_fWriteRequest = [this](){ write_empty(); };
   m_fDone = []( bool, int, const std::string& ){}; // prepopulated dummy entry
 
   // Look up the domain name
@@ -102,7 +98,9 @@ void one_shot::run(
     sHost, sPort,
     beast::bind_front_handler(
       &one_shot::on_resolve,
-      shared_from_this()
+      shared_from_this(),
+      //[this](){ write_empty(); }
+      std::bind( &one_shot::write_empty, shared_from_this() )
     )
   );
 }
@@ -138,14 +136,14 @@ void one_shot::get(
   //BOOST_LOG_TRIVIAL(info) << "get request: '" << s << "'";
   m_request_empty.target( s );
 
-  m_fWriteRequest = [this](){ write_empty(); };
-
   // Look up the domain name
   m_resolver.async_resolve(
     sHost, sPort,
     beast::bind_front_handler(
       &one_shot::on_resolve,
-      shared_from_this()
+      shared_from_this(),
+      //[this](){ write_empty(); }
+      std::bind( &one_shot::write_empty, shared_from_this() )
     )
   );
 }
@@ -185,14 +183,14 @@ void one_shot::get(
   m_request_body.body() = sBody;
   m_request_body.prepare_payload();
 
-  m_fWriteRequest = [this](){ write_body(); };
-
   // Look up the domain name
   m_resolver.async_resolve(
     sHost, sPort,
     beast::bind_front_handler(
       &one_shot::on_resolve,
-      shared_from_this()
+      shared_from_this(),
+      //[this](){ write_body(); }
+      std::bind( &one_shot::write_body, shared_from_this() )
     )
   );
 }
@@ -234,14 +232,14 @@ void one_shot::post(
 
   //BOOST_LOG_TRIVIAL(info) << m_request_body;
 
-  m_fWriteRequest = [this](){ write_body(); };
-
   // Look up the domain name
   m_resolver.async_resolve(
     sHost, sPort,
     beast::bind_front_handler(
       &one_shot::on_resolve,
-      shared_from_this()
+      shared_from_this(),
+      //[this](){ write_body(); }
+      std::bind( &one_shot::write_body, shared_from_this() )
     )
   );
 }
@@ -249,7 +247,6 @@ void one_shot::post(
 void one_shot::delete_(
   const std::string& sHost
 , const std::string& sPort
-, const std::string& sTelegramToken
 , const std::string& sTarget
 , fDone_t&& fDone
 ) {
@@ -275,14 +272,14 @@ void one_shot::delete_(
 
   m_request_empty.target( sTarget );
 
-  m_fWriteRequest = [this](){ write_empty(); };
-
   // Look up the domain name
   m_resolver.async_resolve(
     sHost, sPort,
     beast::bind_front_handler(
       &one_shot::on_resolve,
-      shared_from_this()
+      shared_from_this(),
+      //[this](){ write_empty(); }
+      std::bind( &one_shot::write_empty, shared_from_this() )
     )
   );
 }
@@ -290,6 +287,7 @@ void one_shot::delete_(
 // ===== private
 
 void one_shot::on_resolve(
+  fWriteRequest_t&& f,
   beast::error_code ec,
   tcp::resolver::results_type results
 ) {
@@ -304,16 +302,19 @@ void one_shot::on_resolve(
     //BOOST_LOG_TRIVIAL(info) << "os.on_resolve";
 
     // Make the connection on the IP address we get from a lookup
-    beast::get_lowest_layer( m_stream ).async_connect(
-      results,
-      beast::bind_front_handler(
-        &one_shot::on_connect,
-        shared_from_this() )
+    beast::get_lowest_layer(
+      m_stream ).async_connect(
+        results,
+        beast::bind_front_handler(
+          &one_shot::on_connect,
+          shared_from_this(),
+          std::move( f )
+        )
       );
   }
 }
 
-void one_shot::on_connect( beast::error_code ec, tcp::resolver::results_type::endpoint_type et ) {
+void one_shot::on_connect( fWriteRequest_t&& f, beast::error_code ec, tcp::resolver::results_type::endpoint_type et ) {
   if ( ec ) {
     fail( ec, "os.on_connect" );
     m_fDone( false, ec.value(), "os.on_connect" );
@@ -327,13 +328,14 @@ void one_shot::on_connect( beast::error_code ec, tcp::resolver::results_type::en
       ssl::stream_base::client,
       beast::bind_front_handler(
         &one_shot::on_handshake,
-        shared_from_this()
+        shared_from_this(),
+        std::move( f )
       )
     );
   }
 }
 
-void one_shot::on_handshake( beast::error_code ec ) {
+void one_shot::on_handshake( fWriteRequest_t&& f, beast::error_code ec ) {
 
   if ( ec ) {
     fail( ec, "os.on_handshake" );
@@ -346,8 +348,8 @@ void one_shot::on_handshake( beast::error_code ec ) {
     // Set a timeout on the operation
     beast::get_lowest_layer( m_stream ).expires_after( std::chrono::seconds( 15 ) );
 
-    assert( m_fWriteRequest );
-    m_fWriteRequest();
+    assert( f );
+    f();
   }
 }
 
@@ -356,7 +358,8 @@ void one_shot::write_empty() {
   //BOOST_LOG_TRIVIAL(info) << "os.write_empty";
 
   // Send the HTTP request to the remote host
-  http::async_write( m_stream, m_request_empty,
+  http::async_write(
+    m_stream, m_request_empty,
     beast::bind_front_handler(
       &one_shot::on_write,
       shared_from_this()
@@ -369,7 +372,8 @@ void one_shot::write_body() {
   //BOOST_LOG_TRIVIAL(info) << "os.write_body";
 
   // Send the HTTP request to the remote host
-  http::async_write( m_stream, m_request_body,
+  http::async_write(
+    m_stream, m_request_body,
     beast::bind_front_handler(
       &one_shot::on_write,
       shared_from_this()

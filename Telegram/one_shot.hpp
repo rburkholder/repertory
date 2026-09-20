@@ -58,7 +58,6 @@ public:
   , const std::string& sPort
   , const std::string& sTarget
   , int version
-  , const std::string& sTelegramToken
   );
 
   void get(
@@ -99,7 +98,6 @@ public:
   void delete_(
     const std::string& sHost
   , const std::string& sPort
-  , const std::string& sTelegramToken
   , const std::string& sTarget
   , fDone_t&&
   );
@@ -117,15 +115,12 @@ private:
   http::response_parser<http::string_body> m_parser;
 
   using fWriteRequest_t = std::function<void()>;
-  fWriteRequest_t m_fWriteRequest;
 
   fDone_t m_fDone;
 
-  void on_resolve( beast::error_code, tcp::resolver::results_type );
-
-  void on_connect( beast::error_code, tcp::resolver::results_type::endpoint_type );
-
-  void on_handshake( beast::error_code );
+  void on_resolve( fWriteRequest_t&&, beast::error_code, tcp::resolver::results_type );
+  void on_connect( fWriteRequest_t&&, beast::error_code, tcp::resolver::results_type::endpoint_type );
+  void on_handshake( fWriteRequest_t&&, beast::error_code );
 
   void write_empty();
   void write_body();
