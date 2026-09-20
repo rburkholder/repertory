@@ -114,19 +114,17 @@ private:
   http::response<http::string_body> m_response;
   http::response_parser<http::string_body> m_parser;
 
-  using fWriteRequest_t = std::function<void()>;
+  using fWriteRequest_t = std::function<void( fDone_t&& )>;
 
-  fDone_t m_fDone;
+  void on_resolve( fWriteRequest_t&&, fDone_t&&, beast::error_code, tcp::resolver::results_type );
+  void on_connect( fWriteRequest_t&&, fDone_t&&, beast::error_code, tcp::resolver::results_type::endpoint_type );
+  void on_handshake( fWriteRequest_t&&, fDone_t&&, beast::error_code );
 
-  void on_resolve( fWriteRequest_t&&, beast::error_code, tcp::resolver::results_type );
-  void on_connect( fWriteRequest_t&&, beast::error_code, tcp::resolver::results_type::endpoint_type );
-  void on_handshake( fWriteRequest_t&&, beast::error_code );
+  void write_empty( fDone_t&& );
+  void write_body( fDone_t&& );
 
-  void write_empty();
-  void write_body();
-
-  void on_write( beast::error_code, std::size_t bytes_transferred );
-  void on_read( beast::error_code, std::size_t bytes_transferred );
+  void on_write( fDone_t&&, beast::error_code, std::size_t bytes_transferred );
+  void on_read( fDone_t&&, beast::error_code, std::size_t bytes_transferred );
 
   void on_shutdown( beast::error_code ec );
 

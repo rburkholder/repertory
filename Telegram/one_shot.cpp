@@ -23,8 +23,6 @@
 
 #include <boost/log/trivial.hpp>
 
-#include <boost/beast/version.hpp>
-
 #include "one_shot.hpp"
 
 namespace ou {
@@ -50,7 +48,6 @@ one_shot::one_shot(
 )
 : m_resolver( ex )
 , m_stream( ex, ssl_ctx )
-, m_fDone( nullptr )
 {
   //BOOST_LOG_TRIVIAL(info) << "telegram_bot::one_shot construction"; // ensuring proper timing of handling
 
@@ -63,7 +60,6 @@ one_shot::~one_shot() {
   //m_stream.shutdown();  // doesn't like this
   m_buffer.clear();
   m_response.clear();
-  m_fDone = nullptr;
 }
 
 void one_shot::run(
@@ -91,8 +87,6 @@ void one_shot::run(
   //req_.body() = json::serialize( jv );
   //req_.prepare_payload();
 
-  m_fDone = []( bool, int, const std::string& ){}; // prepopulated dummy entry
-
   // Look up the domain name
   m_resolver.async_resolve(
     sHost, sPort,
@@ -100,7 +94,8 @@ void one_shot::run(
       &one_shot::on_resolve,
       shared_from_this(),
       //[this](){ write_empty(); }
-      std::bind( &one_shot::write_empty, shared_from_this() )
+      std::bind( &one_shot::write_empty, shared_from_this(), std::placeholders::_1 ),
+      []( bool, int, const std::string& ){} // prepopulated dummy entry
     )
   );
 }
@@ -113,15 +108,14 @@ void one_shot::get(
 , fDone_t&& fDone
 ) {
 
-  m_fDone = std::move( fDone );
-  assert( m_fDone );
+  assert( fDone );
 
   // Set SNI Hostname (many hosts need this to handshake successfully)
   if( !SSL_set_tlsext_host_name( m_stream.native_handle(), sHost.c_str() ) )
   {
     beast::error_code ec{ static_cast<int>( ::ERR_get_error()), asio::error::get_ssl_category() };
     BOOST_LOG_TRIVIAL(error) << ec.message();
-    m_fDone( false, ec.value(), ec.message() );
+    fDone( false, ec.value(), ec.message() );
     return;
   }
 
@@ -143,7 +137,8 @@ void one_shot::get(
       &one_shot::on_resolve,
       shared_from_this(),
       //[this](){ write_empty(); }
-      std::bind( &one_shot::write_empty, shared_from_this() )
+      std::bind( &one_shot::write_empty, shared_from_this(), std::placeholders::_1 ),
+      std::move( fDone )
     )
   );
 }
@@ -157,15 +152,14 @@ void one_shot::get(
 , fDone_t&& fDone
 ) {
 
-  m_fDone = std::move( fDone );
-  assert( m_fDone );
+  assert( fDone );
 
   // Set SNI Hostname (many hosts need this to handshake successfully)
   if( !SSL_set_tlsext_host_name( m_stream.native_handle(), sHost.c_str() ) )
   {
     beast::error_code ec{ static_cast<int>( ::ERR_get_error()), asio::error::get_ssl_category() };
     BOOST_LOG_TRIVIAL(error) << ec.message();
-    m_fDone( false, ec.value(), ec.message() );
+    fDone( false, ec.value(), ec.message() );
     return;
   }
 
@@ -190,7 +184,8 @@ void one_shot::get(
       &one_shot::on_resolve,
       shared_from_this(),
       //[this](){ write_body(); }
-      std::bind( &one_shot::write_body, shared_from_this() )
+      std::bind( &one_shot::write_body, shared_from_this(), std::placeholders::_1 ),
+      std::move( fDone )
     )
   );
 }
@@ -204,15 +199,14 @@ void one_shot::post(
 , fDone_t&& fDone
 ) {
 
-  m_fDone = std::move( fDone );
-  assert( m_fDone );
+  assert( fDone );
 
   // Set SNI Hostname (many hosts need this to handshake successfully)
   if( !SSL_set_tlsext_host_name( m_stream.native_handle(), sHost.c_str() ) )
   {
     beast::error_code ec{ static_cast<int>( ::ERR_get_error()), asio::error::get_ssl_category() };
     BOOST_LOG_TRIVIAL(error) << ec.message();
-    m_fDone( false, ec.value(), ec.message() );
+    fDone( false, ec.value(), ec.message() );
     return;
   }
 
@@ -239,7 +233,8 @@ void one_shot::post(
       &one_shot::on_resolve,
       shared_from_this(),
       //[this](){ write_body(); }
-      std::bind( &one_shot::write_body, shared_from_this() )
+      std::bind( &one_shot::write_body, shared_from_this(), std::placeholders::_1 ),
+      std::move( fDone )
     )
   );
 }
@@ -251,15 +246,14 @@ void one_shot::delete_(
 , fDone_t&& fDone
 ) {
 
-  m_fDone = std::move( fDone );
-  assert( m_fDone );
+  assert( fDone );
 
   // Set SNI Hostname (many hosts need this to handshake successfully)
   if( !SSL_set_tlsext_host_name( m_stream.native_handle(), sHost.c_str() ) )
   {
     beast::error_code ec{ static_cast<int>( ::ERR_get_error()), asio::error::get_ssl_category() };
     BOOST_LOG_TRIVIAL(error) << ec.message();
-    m_fDone( false, ec.value(), ec.message() );
+    fDone( false, ec.value(), ec.message() );
     return;
   }
 
@@ -279,7 +273,8 @@ void one_shot::delete_(
       &one_shot::on_resolve,
       shared_from_this(),
       //[this](){ write_empty(); }
-      std::bind( &one_shot::write_empty, shared_from_this() )
+      std::bind( &one_shot::write_empty, shared_from_this(), std::placeholders::_1 ),
+      std::move( fDone )
     )
   );
 }
@@ -287,13 +282,14 @@ void one_shot::delete_(
 // ===== private
 
 void one_shot::on_resolve(
-  fWriteRequest_t&& f,
+  fWriteRequest_t&& fWrite,
+  fDone_t&& fDone,
   beast::error_code ec,
   tcp::resolver::results_type results
 ) {
   if ( ec ) {
     fail( ec, "os.on_resolve");
-    m_fDone( false, ec.value(), "os.on_resolve" );
+    fDone( false, ec.value(), "os.on_resolve" );
   }
   else {
     // Set a timeout on the operation
@@ -308,16 +304,20 @@ void one_shot::on_resolve(
         beast::bind_front_handler(
           &one_shot::on_connect,
           shared_from_this(),
-          std::move( f )
+          std::move( fWrite ),
+          std::move( fDone )
         )
       );
   }
 }
 
-void one_shot::on_connect( fWriteRequest_t&& f, beast::error_code ec, tcp::resolver::results_type::endpoint_type et ) {
+void one_shot::on_connect(
+  fWriteRequest_t&& fWrite, fDone_t&& fDone,
+  beast::error_code ec, tcp::resolver::results_type::endpoint_type et
+) {
   if ( ec ) {
     fail( ec, "os.on_connect" );
-    m_fDone( false, ec.value(), "os.on_connect" );
+    fDone( false, ec.value(), "os.on_connect" );
   }
   else {
 
@@ -329,17 +329,18 @@ void one_shot::on_connect( fWriteRequest_t&& f, beast::error_code ec, tcp::resol
       beast::bind_front_handler(
         &one_shot::on_handshake,
         shared_from_this(),
-        std::move( f )
+        std::move( fWrite ),
+        std::move( fDone )
       )
     );
   }
 }
 
-void one_shot::on_handshake( fWriteRequest_t&& f, beast::error_code ec ) {
+void one_shot::on_handshake( fWriteRequest_t&& fWrite, fDone_t&& fDone, beast::error_code ec ) {
 
   if ( ec ) {
     fail( ec, "os.on_handshake" );
-    m_fDone( false, ec.value(), "os.on_handshake" );
+    fDone( false, ec.value(), "os.on_handshake" );
   }
   else {
 
@@ -348,12 +349,12 @@ void one_shot::on_handshake( fWriteRequest_t&& f, beast::error_code ec ) {
     // Set a timeout on the operation
     beast::get_lowest_layer( m_stream ).expires_after( std::chrono::seconds( 15 ) );
 
-    assert( f );
-    f();
+    assert( fWrite );
+    fWrite( std::move( fDone ) );
   }
 }
 
-void one_shot::write_empty() {
+void one_shot::write_empty( fDone_t&& fDone ) {
 
   //BOOST_LOG_TRIVIAL(info) << "os.write_empty";
 
@@ -362,12 +363,13 @@ void one_shot::write_empty() {
     m_stream, m_request_empty,
     beast::bind_front_handler(
       &one_shot::on_write,
-      shared_from_this()
+      shared_from_this(),
+      std::move( fDone )
     )
   );
 }
 
-void one_shot::write_body() {
+void one_shot::write_body( fDone_t&& fDone ) {
 
   //BOOST_LOG_TRIVIAL(info) << "os.write_body";
 
@@ -376,12 +378,14 @@ void one_shot::write_body() {
     m_stream, m_request_body,
     beast::bind_front_handler(
       &one_shot::on_write,
-      shared_from_this()
+      shared_from_this(),
+      std::move( fDone )
     )
   );
 }
 
 void one_shot::on_write(
+  fDone_t&& fDone,
   beast::error_code ec,
   std::size_t bytes_transferred
 ) {
@@ -389,7 +393,7 @@ void one_shot::on_write(
 
   if ( ec ) {
     fail( ec, "os.on_write" );
-    m_fDone( false, ec.value(), "os.on_write" );
+    fDone( false, ec.value(), "os.on_write" );
   }
   else {
 
@@ -401,7 +405,8 @@ void one_shot::on_write(
       m_stream, m_buffer, m_parser,
       beast::bind_front_handler(
         &one_shot::on_read,
-        shared_from_this()
+        shared_from_this(),
+        std::move( fDone )
       )
     );
   }
@@ -425,7 +430,7 @@ void one_shot::on_write(
 
 */
 
-void one_shot::on_read( beast::error_code ec, std::size_t bytes_transferred ) {
+void one_shot::on_read( fDone_t&& fDone, beast::error_code ec, std::size_t bytes_transferred ) {
 
   boost::ignore_unused( bytes_transferred );
 
@@ -437,7 +442,7 @@ void one_shot::on_read( beast::error_code ec, std::size_t bytes_transferred ) {
         fail( ec, "os.on_read" );
         break;
     }
-    m_fDone( false, ec.value(), "os.on_read" );
+    fDone( false, ec.value(), "os.on_read" );
   }
   else {
 
@@ -447,7 +452,7 @@ void one_shot::on_read( beast::error_code ec, std::size_t bytes_transferred ) {
     //BOOST_LOG_TRIVIAL(info) << "body():" << m_parser.get().body();
 
     //m_fDone( true, m_response.body() );
-    m_fDone( true, ec.value(), body );
+    fDone( true, ec.value(), body );
     // Set a timeout on the operation
     beast::get_lowest_layer( m_stream ).expires_after( std::chrono::seconds( 15 ) );
 
