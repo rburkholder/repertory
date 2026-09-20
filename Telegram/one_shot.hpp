@@ -108,9 +108,6 @@ private:
   beast::flat_buffer m_buffer; // (Must persist between reads)
   beast::ssl_stream<beast::tcp_stream> m_stream;
 
-  http::request<http::empty_body> m_request_empty; // one or the other
-  http::request<http::string_body> m_request_body; // one or the other
-
   http::response<http::string_body> m_response;
   http::response_parser<http::string_body> m_parser;
 
@@ -120,9 +117,13 @@ private:
   void on_connect( fWriteRequest_t&&, fDone_t&&, beast::error_code, tcp::resolver::results_type::endpoint_type );
   void on_handshake( fWriteRequest_t&&, fDone_t&&, beast::error_code );
 
-  void write_empty( fDone_t&& );
-  void write_body( fDone_t&& );
+  using pRequestEmptyBody_t = std::shared_ptr<http::request<http::empty_body> >; // unique_ptr doesn't work in the bind
+  void write_empty( pRequestEmptyBody_t, fDone_t&& );
+  using pRequestStringBody_t = std::shared_ptr<http::request<http::string_body> >; // unique_ptr doesn't work in the bind
+  void write_body( pRequestStringBody_t, fDone_t&& );
 
+  void on_write_empty( pRequestEmptyBody_t, fDone_t&&, beast::error_code, std::size_t bytes_transferred );
+  void on_write_body( pRequestStringBody_t, fDone_t&&, beast::error_code, std::size_t bytes_transferred );
   void on_write( fDone_t&&, beast::error_code, std::size_t bytes_transferred );
   void on_read( fDone_t&&, beast::error_code, std::size_t bytes_transferred );
 
