@@ -73,7 +73,7 @@ void one_shot::run(
 
   // Set up an HTTP GET request message
   pRequestEmptyBody_t pRequest = std::make_shared<http::request<http::empty_body>>();
-  auto request( *pRequest );
+  auto& request( *pRequest );
   request.version( version );
   request.method( http::verb::get );
   request.set( http::field::host, sHost );
@@ -118,7 +118,7 @@ void one_shot::get(
 
   // Set up an HTTP GET request message
   pRequestEmptyBody_t pRequest = std::make_shared<http::request<http::empty_body>>();
-  auto request( *pRequest );
+  auto& request( *pRequest );
   request.version( nVersion );
   request.method( http::verb::get );
   request.set( http::field::host, sHost );
@@ -164,7 +164,7 @@ void one_shot::get(
 
   // Set up an HTTP GET request message
   pRequestStringBody_t pRequest = std::make_shared<http::request<http::string_body>>();
-  auto request( *pRequest );
+  auto& request( *pRequest );
   request.version( nVersion );
   request.method( http::verb::get );
   request.set( http::field::host, sHost );
@@ -213,7 +213,7 @@ void one_shot::post(
 
   // Set up an HTTP GET request message
   pRequestStringBody_t pRequest = std::make_shared<http::request<http::string_body>>();
-  auto request( *pRequest );
+  auto& request( *pRequest );
   request.version( nVersion );
   request.method( http::verb::post );
   request.set( http::field::host, sHost );
@@ -262,7 +262,7 @@ void one_shot::delete_(
 
   // Set up an HTTP GET request message
   pRequestEmptyBody_t pRequest = std::make_shared<http::request<http::empty_body>>();
-  auto request( *pRequest );
+  auto& request( *pRequest );
   request.version( nVersion );
   request.method( http::verb::delete_ );
   request.set( http::field::host, sHost );
