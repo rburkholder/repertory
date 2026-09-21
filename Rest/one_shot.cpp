@@ -83,6 +83,7 @@ void one_shot::run(
       shared_from_this(),
       //[this](){ write_empty(); }
       std::bind( &one_shot::write_empty, shared_from_this(), std::move( pRequest ), std::placeholders::_1 ),
+      //[this,p=std::move(pRequest)]( fDone_t&& fDone ){ write_empty( std::move( p ), std::move( fDone ) ); },
       []( bool, int, const std::string& ){} // prepopulated dummy entry
     )
   );
@@ -127,6 +128,7 @@ void one_shot::get(
       shared_from_this(),
       //[this](){ write_empty(); }
       std::bind( &one_shot::write_empty, shared_from_this(), std::move( pRequest ), std::placeholders::_1 ),
+      //[this,p=std::move(pRequest)]( fDone_t&& fDone ){ write_empty( std::move( p ), std::move( fDone ) ); },
       std::move( fDone )
     )
   );
@@ -175,6 +177,7 @@ void one_shot::get(
       shared_from_this(),
       //[this](){ write_body(); }
       std::bind( &one_shot::write_body, shared_from_this(), std::move( pRequest ), std::placeholders::_1 ),
+      //[this,p=std::move(pRequest)]( fDone_t&& fDone ){ write_body( std::move( p ), std::move( fDone ) ); },
       std::move( fDone )
     )
   );
@@ -225,6 +228,7 @@ void one_shot::post(
       shared_from_this(),
       //[this](){ write_body(); }
       std::bind( &one_shot::write_body, shared_from_this(), std::move( pRequest ), std::placeholders::_1 ),
+      //[this,p=std::move(pRequest)]( fDone_t&& fDone ){ write_body( std::move( p ), std::move( fDone ) ); },
       std::move( fDone )
     )
   );
@@ -267,6 +271,7 @@ void one_shot::delete_(
       shared_from_this(),
       //[this](){ write_empty(); }
       std::bind( &one_shot::write_empty, shared_from_this(), std::move( pRequest ), std::placeholders::_1 ),
+      //[this,p=std::move(pRequest)]( fDone_t&& fDone ){ write_empty( std::move( p ), std::move( fDone ) ); },
       std::move( fDone )
     )
   );

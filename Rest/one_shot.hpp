@@ -27,7 +27,9 @@ namespace ou {
 namespace rest {
 
 // https://www.boost.org/doc/libs/1_79_0/libs/beast/example/http/client/async-ssl/http_client_async_ssl.cpp
-class one_shot : ou::rest::handler {
+class one_shot
+: public ou::rest::handler
+{
 public:
 
   explicit one_shot(
