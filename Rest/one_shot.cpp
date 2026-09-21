@@ -62,29 +62,28 @@ void one_shot::run(
     return;
   }
 
+  m_fDone = []( bool, int, const std::string& ){}; // prepopulated dummy entry
+
   // Set up an HTTP GET request message
   pRequestEmptyBody_t pRequest = std::make_shared<http::request<http::empty_body>>();
-  auto& request( *pRequest );
-  request.version( version );
-  request.method( http::verb::get );
-  request.set( http::field::host, sHost );
+  pRequest->version( version );
+  pRequest->method( http::verb::get );
+  pRequest->set( http::field::host, sHost );
   //request_.set( http::field::user_agent, BOOST_BEAST_VERSION_STRING );
-  request.set( http::field::user_agent, sUserAgent );
+  pRequest->set( http::field::user_agent, sUserAgent );
 
-  request.target( sTarget );
+  pRequest->target( sTarget );
   //req_.body() = json::serialize( jv );
   //req_.prepare_payload();
+
+  m_pRequestBody = std::move( pRequest );
 
   // Look up the domain name
   m_resolver.async_resolve(
     sHost, sPort,
     beast::bind_front_handler(
       &one_shot::on_resolve,
-      shared_from_this(),
-      //[this](){ write_empty(); }
-      std::bind( &one_shot::write_empty, shared_from_this(), std::move( pRequest ), std::placeholders::_1 ),
-      //[this,p=std::move(pRequest)]( fDone_t&& fDone ){ write_empty( std::move( p ), std::move( fDone ) ); },
-      []( bool, int, const std::string& ){} // prepopulated dummy entry
+      shared_from_this()
     )
   );
 }
@@ -107,29 +106,29 @@ void one_shot::get(
     return;
   }
 
+  m_fDone = std::move( fDone );
+
   // Set up an HTTP GET request message
   pRequestEmptyBody_t pRequest = std::make_shared<http::request<http::empty_body>>();
-  auto& request( *pRequest );
-  request.version( nVersion );
-  request.method( http::verb::get );
-  request.set( http::field::host, sHost );
-  request.set( http::field::user_agent, sUserAgent );
+  //auto& request( *pRequest );
+  pRequest->version( nVersion );
+  pRequest->method( http::verb::get );
+  pRequest->set( http::field::host, sHost );
+  pRequest->set( http::field::user_agent, sUserAgent );
 
   //m_request_empty.target( sTarget );
   //const std::string s( "/bot" + sTelegramToken + "/" + sCommand );
-  //BOOST_LOG_TRIVIAL(info) << "get request: '" << s << "'";
-  request.target( sTarget );
+  //BOOST_LOG_TRIVIAL(info) << "get request: '" << sTarget << "'";
+  pRequest->target( sTarget );
+
+  m_pRequestBody = std::move( pRequest );
 
   // Look up the domain name
   m_resolver.async_resolve(
     sHost, sPort,
     beast::bind_front_handler(
       &one_shot::on_resolve,
-      shared_from_this(),
-      //[this](){ write_empty(); }
-      std::bind( &one_shot::write_empty, shared_from_this(), std::move( pRequest ), std::placeholders::_1 ),
-      //[this,p=std::move(pRequest)]( fDone_t&& fDone ){ write_empty( std::move( p ), std::move( fDone ) ); },
-      std::move( fDone )
+      shared_from_this()
     )
   );
 }
@@ -153,32 +152,32 @@ void one_shot::get(
     return;
   }
 
+  m_fDone = std::move( fDone );
+
   // Set up an HTTP GET request message
   pRequestStringBody_t pRequest = std::make_shared<http::request<http::string_body>>();
-  auto& request( *pRequest );
-  request.version( nVersion );
-  request.method( http::verb::get );
-  request.set( http::field::host, sHost );
-  request.set( http::field::user_agent, sUserAgent );
-  request.set( http::field::content_type, "application/json" );
+  //auto& request( *pRequest );
+  pRequest->version( nVersion );
+  pRequest->method( http::verb::get );
+  pRequest->set( http::field::host, sHost );
+  pRequest->set( http::field::user_agent, sUserAgent );
+  pRequest->set( http::field::content_type, "application/json" );
 
   //const std::string sTarget( "/bot" + sTelegramToken + "/" + sCommand );
-  //BOOST_LOG_TRIVIAL(info) << "get request: '" << s << "'";
-  request.target( sTarget );
+  //BOOST_LOG_TRIVIAL(info) << "get request: '" << sTarget << "', '" << sBody << "'";
+  pRequest->target( sTarget );
 
-  request.body() = sBody;
-  request.prepare_payload();
+  pRequest->body() = sBody;
+  pRequest->prepare_payload();
+
+  m_pRequestBody = std::move( pRequest );
 
   // Look up the domain name
   m_resolver.async_resolve(
     sHost, sPort,
     beast::bind_front_handler(
       &one_shot::on_resolve,
-      shared_from_this(),
-      //[this](){ write_body(); }
-      std::bind( &one_shot::write_body, shared_from_this(), std::move( pRequest ), std::placeholders::_1 ),
-      //[this,p=std::move(pRequest)]( fDone_t&& fDone ){ write_body( std::move( p ), std::move( fDone ) ); },
-      std::move( fDone )
+      shared_from_this()
     )
   );
 }
@@ -202,21 +201,24 @@ void one_shot::post(
     return;
   }
 
+  m_fDone = std::move( fDone );
+
   // Set up an HTTP GET request message
   pRequestStringBody_t pRequest = std::make_shared<http::request<http::string_body>>();
-  auto& request( *pRequest );
-  request.version( nVersion );
-  request.method( http::verb::post );
-  request.set( http::field::host, sHost );
-  request.set( http::field::user_agent, sUserAgent );
-  request.set( http::field::content_type, "application/json" );
+  pRequest->version( nVersion );
+  pRequest->method( http::verb::post );
+  pRequest->set( http::field::host, sHost );
+  pRequest->set( http::field::user_agent, sUserAgent );
+  pRequest->set( http::field::content_type, "application/json" );
 
   //const std::string sTarget( "/bot" + sTelegramToken + "/" + sCommand );
-  //BOOST_LOG_TRIVIAL(info) << "post target: '" << sTarget << "'";
-  request.target( sTarget );
+  //BOOST_LOG_TRIVIAL(info) << "post target: '" << sTarget << "', '" << sBody << "'";
+  pRequest->target( sTarget );
 
-  request.body() = sBody;
-  request.prepare_payload();
+  pRequest->body() = sBody;
+  pRequest->prepare_payload();
+
+  m_pRequestBody = std::move( pRequest );
 
   //BOOST_LOG_TRIVIAL(info) << m_request_body;
 
@@ -225,11 +227,7 @@ void one_shot::post(
     sHost, sPort,
     beast::bind_front_handler(
       &one_shot::on_resolve,
-      shared_from_this(),
-      //[this](){ write_body(); }
-      std::bind( &one_shot::write_body, shared_from_this(), std::move( pRequest ), std::placeholders::_1 ),
-      //[this,p=std::move(pRequest)]( fDone_t&& fDone ){ write_body( std::move( p ), std::move( fDone ) ); },
-      std::move( fDone )
+      shared_from_this()
     )
   );
 }
@@ -252,27 +250,26 @@ void one_shot::delete_(
     return;
   }
 
+  m_fDone = std::move( fDone );
+
   // Set up an HTTP GET request message
   pRequestEmptyBody_t pRequest = std::make_shared<http::request<http::empty_body>>();
-  auto& request( *pRequest );
-  request.version( nVersion );
-  request.method( http::verb::delete_ );
-  request.set( http::field::host, sHost );
+  pRequest->version( nVersion );
+  pRequest->method( http::verb::delete_ );
+  pRequest->set( http::field::host, sHost );
   //request_.set( http::field::user_agent, BOOST_BEAST_VERSION_STRING );
-  request.set( http::field::user_agent, sUserAgent );
+  pRequest->set( http::field::user_agent, sUserAgent );
 
-  request.target( sTarget );
+  pRequest->target( sTarget );
+
+  m_pRequestBody = std::move( pRequest );
 
   // Look up the domain name
   m_resolver.async_resolve(
     sHost, sPort,
     beast::bind_front_handler(
       &one_shot::on_resolve,
-      shared_from_this(),
-      //[this](){ write_empty(); }
-      std::bind( &one_shot::write_empty, shared_from_this(), std::move( pRequest ), std::placeholders::_1 ),
-      //[this,p=std::move(pRequest)]( fDone_t&& fDone ){ write_empty( std::move( p ), std::move( fDone ) ); },
-      std::move( fDone )
+      shared_from_this()
     )
   );
 }

@@ -45,15 +45,12 @@ handler::~handler() {
 }
 
 void handler::on_resolve(
-
-  fWriteRequest_t&& fWrite,
-  fDone_t&& fDone,
   beast::error_code ec,
   tcp::resolver::results_type results
 ) {
   if ( ec ) {
     fail( ec, "os.on_resolve");
-    fDone( false, ec.value(), "os.on_resolve" );
+    m_fDone( false, ec.value(), "os.on_resolve" );
   }
   else {
     // Set a timeout on the operation
@@ -67,21 +64,18 @@ void handler::on_resolve(
         results,
         beast::bind_front_handler(
           &handler::on_connect,
-          shared_from_this(),
-          std::move( fWrite ),
-          std::move( fDone )
+          shared_from_this()
         )
       );
   }
 }
 
 void handler::on_connect(
-  fWriteRequest_t&& fWrite, fDone_t&& fDone,
   beast::error_code ec, tcp::resolver::results_type::endpoint_type et
 ) {
   if ( ec ) {
     fail( ec, "os.on_connect" );
-    fDone( false, ec.value(), "os.on_connect" );
+    m_fDone( false, ec.value(), "os.on_connect" );
   }
   else {
 
@@ -92,19 +86,17 @@ void handler::on_connect(
       ssl::stream_base::client,
       beast::bind_front_handler(
         &handler::on_handshake,
-        shared_from_this(),
-        std::move( fWrite ),
-        std::move( fDone )
+        shared_from_this()
       )
     );
   }
 }
 
-void handler::on_handshake( fWriteRequest_t&& fWrite, fDone_t&& fDone, beast::error_code ec ) {
+void handler::on_handshake( beast::error_code ec ) {
 
   if ( ec ) {
     fail( ec, "os.on_handshake" );
-    fDone( false, ec.value(), "os.on_handshake" );
+    m_fDone( false, ec.value(), "os.on_handshake" );
   }
   else {
 
@@ -113,63 +105,52 @@ void handler::on_handshake( fWriteRequest_t&& fWrite, fDone_t&& fDone, beast::er
     // Set a timeout on the operation
     beast::get_lowest_layer( m_stream ).expires_after( std::chrono::seconds( 15 ) );
 
-    assert( fWrite );
-    fWrite( std::move( fDone ) );
+    switch ( m_pRequestBody.index() ) {
+      case 0:
+        write_empty();
+        break;
+      case 1:
+        write_body();
+        break;
+      default:
+        break;
+    }
   }
 }
 
-void handler::write_empty( pRequestEmptyBody_t pRequest, fDone_t&& fDone ) {
+void handler::write_empty() {
 
   //BOOST_LOG_TRIVIAL(info) << "os.write_empty";
 
+  pRequestEmptyBody_t& pRequest = std::get<pRequestEmptyBody_t>( m_pRequestBody );
+
   // Send the HTTP request to the remote host
   http::async_write(
     m_stream, *pRequest,
     beast::bind_front_handler(
-      &handler::on_write_empty,
-      shared_from_this(),
-      std::move( pRequest ),
-      std::move( fDone )
+      &handler::on_write,
+      shared_from_this()
     )
   );
 }
 
-void handler::write_body( pRequestStringBody_t pRequest, fDone_t&& fDone ) {
+void handler::write_body() {
 
   //BOOST_LOG_TRIVIAL(info) << "os.write_body";
 
+  pRequestStringBody_t& pRequest = std::get<pRequestStringBody_t>( m_pRequestBody );
+
   // Send the HTTP request to the remote host
   http::async_write(
     m_stream, *pRequest,
     beast::bind_front_handler(
-      &handler::on_write_body,
-      shared_from_this(),
-      std::move( pRequest ),
-      std::move( fDone )
+      &handler::on_write,
+      shared_from_this()
     )
   );
 }
 
-void handler::on_write_empty(
-  pRequestEmptyBody_t pRequest, // keeps reference until the async has been completed
-  fDone_t&& fDone,
-  beast::error_code ec,
-  std::size_t bytes_transferred
-) {
-  on_write( std::move( fDone), ec, bytes_transferred );
-}
-
-void handler::on_write_body(
-  pRequestStringBody_t pRequest,  // keeps reference until the async has been completed
-  fDone_t&& fDone,
-  beast::error_code ec,
-  std::size_t bytes_transferred
-) {
-  on_write( std::move( fDone), ec, bytes_transferred );
-}
-
 void handler::on_write(
-  fDone_t&& fDone,
   beast::error_code ec,
   std::size_t bytes_transferred
 ) {
@@ -177,22 +158,18 @@ void handler::on_write(
 
   if ( ec ) {
     fail( ec, "os.on_write" );
-    fDone( false, ec.value(), "os.on_write" );
+    m_fDone( false, ec.value(), "os.on_write" );
   }
   else {
 
     //BOOST_LOG_TRIVIAL(info) << "os.on_write";
 
-    pDataIn_t pDataIn = std::make_shared<DataIn>();
-
     // Receive the HTTP response
     http::async_read(
-      m_stream, pDataIn->m_buffer, pDataIn->m_parser,
+      m_stream, m_DataIn.m_buffer, m_DataIn.m_parser,
       beast::bind_front_handler(
         &handler::on_read,
-        shared_from_this(),
-        std::move( pDataIn ),
-        std::move( fDone )
+        shared_from_this()
       )
     );
   }
@@ -216,7 +193,7 @@ void handler::on_write(
 
 */
 
-void handler::on_read( pDataIn_t pDataIn, fDone_t&& fDone, beast::error_code ec, std::size_t bytes_transferred ) {
+void handler::on_read( beast::error_code ec, std::size_t bytes_transferred ) {
 
   boost::ignore_unused( bytes_transferred );
 
@@ -228,18 +205,16 @@ void handler::on_read( pDataIn_t pDataIn, fDone_t&& fDone, beast::error_code ec,
         fail( ec, "os.on_read" );
         break;
     }
-    fDone( false, ec.value(), "os.on_read" );
+    m_fDone( false, ec.value(), "os.on_read" );
   }
   else {
-
-    DataIn& data( *pDataIn );
 
     //BOOST_LOG_TRIVIAL(info) << "os.on_read";
     //BOOST_LOG_TRIVIAL(info) << "get():" << m_parser.get();
     //BOOST_LOG_TRIVIAL(info) << "body():" << m_parser.get().body();
-    const auto& body = pDataIn->m_parser.get().body();
+    const auto& body = m_DataIn.m_parser.get().body();
 
-    fDone( true, ec.value(), body );
+    m_fDone( true, ec.value(), body );
     // Set a timeout on the operation
 
     beast::get_lowest_layer( m_stream ).expires_after( std::chrono::seconds( 15 ) );
