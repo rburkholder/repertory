@@ -1,10 +1,11 @@
 # repertory
 
-Two libraries:
+Three libraries:
 
 * MQTT - basic publish/subscribe to one one topic
 * REST - send message, listen for commands
   * includes Telegram queries
+* Anomalon - serve lua generated web pages
 
 Installation:
 ```bash
@@ -28,11 +29,11 @@ cd build
 
 cmake \
 -D CMAKE_BUILD_TYPE=Release \
--D OU_USE_STATIC_LIB=ON \
--D OU_USE_SHARED_LIB=OFF \
+-D OU_USE_STATIC_LIB=OFF \
+-D OU_USE_SHARED_LIB=ON \
 -D OU_USE_MQTT=ON \
 -D OU_USE_REST=ON \
--D OU_USE_Anomalon=OFF \
+-D OU_USE_Anomalon=ON \
 ..
 sudo cmake --build . --target=install
 

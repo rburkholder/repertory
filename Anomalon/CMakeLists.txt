@@ -22,15 +22,15 @@ set(DEF_OUTPUT_NAME ou_${PROJECT_NAME})
 set(
   file_hpp_public
     handle_methods.hpp
+    listen.hpp
     server_certificate.hpp
     sol_lua.hpp
+    task_group.hpp
   )
 
 set(
   file_hpp_private
-    listen.hpp
     mime_type.hpp
-    task_group.hpp
   )
 
 set(
