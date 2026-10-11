@@ -9,15 +9,19 @@ project(
   )
 
 # <<< General set up >>>
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #set(CMAKE_CXX_COMPILER_ARCHITECTURE_ID "x64")
 
 option(OU_USE_MQTT       "enable MQTT build"              ON)
 option(OU_USE_REST       "enable REST build"              ON)
+option(OU_USE_Anomalon   "enable Anomalon build"          OFF)
 option(OU_USE_STATIC_LIB "enable build of static library" ON)
 option(OU_USE_SHARED_LIB "enable build of shared library" ON)
+
+#add_definitions(-march=native)
+#add_definitions(-pthread)
 
 message(STATUS "Build type set to ${CMAKE_BUILD_TYPE}")
 message(STATUS "${PROJECT_NAME} will be installed to ${CMAKE_INSTALL_PREFIX}")
@@ -46,6 +50,10 @@ endif()
 
 if(OU_USE_REST)
   add_subdirectory(Rest)
+endif()
+
+if(OU_USE_Anomalon)
+  add_subdirectory(Anomalon)
 endif()
 
 # sudo cmake --build . --target install

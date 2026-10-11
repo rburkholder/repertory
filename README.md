@@ -32,6 +32,7 @@ cmake \
 -D OU_USE_SHARED_LIB=OFF \
 -D OU_USE_MQTT=ON \
 -D OU_USE_REST=ON \
+-D OU_USE_Anomalon=OFF \
 ..
 sudo cmake --build . --target=install
 
