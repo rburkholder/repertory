@@ -98,7 +98,7 @@ add_library(
 set_target_properties(
   ${DEF_LIB_Static}
     PROPERTIES
-      PUBLIC_HEADER ${file_hpp_public}
+      PUBLIC_HEADER "${file_hpp_public}"
       OUTPUT_NAME ${DEF_OUTPUT_NAME}
       #DEBUG_POSTFIX "_d"
   )

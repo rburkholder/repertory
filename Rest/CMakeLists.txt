@@ -22,8 +22,8 @@ set(DEF_OUTPUT_NAME ou_${PROJECT_NAME})
 set(
   file_hpp_public
     one_shot.hpp
-    telegram.hpp
     root_certificates.hpp
+    telegram.hpp
   )
 
 set(
@@ -33,9 +33,9 @@ set(
 
 set(
   file_cpp
-    telegram.cpp
-    one_shot.cpp
     handler.cpp
+    one_shot.cpp
+    telegram.cpp
 )
 
 if(OU_USE_SHARED_LIB)
@@ -84,7 +84,7 @@ add_library(
 set_target_properties(
   ${DEF_LIB_Static}
     PROPERTIES
-      PUBLIC_HEADER ${file_hpp_public}
+      PUBLIC_HEADER "${file_hpp_public}"
       OUTPUT_NAME ${DEF_OUTPUT_NAME}
       #DEBUG_POSTFIX "_d"
   )
