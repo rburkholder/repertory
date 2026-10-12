@@ -6,3 +6,4 @@ cross-section — meaning it interacts far more powerfully with its environment 
 For a C++ engine powered by Boost.Beast and Lua, it is a perfect metaphor: 
 a highly reactive, high-performance core that handles massive network throughput with zero friction.
 
+More background on [Anomalon](https://github.com/rburkholder/anomalon)
