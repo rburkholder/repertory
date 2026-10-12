@@ -67,6 +67,7 @@ target_link_libraries(
     ${Boost_LIBRARIES}
     crypto
     ssl
+    fmt.a
   )
 
 target_include_directories(
@@ -115,6 +116,7 @@ target_link_libraries(
     ${Boost_LIBRARIES}
     crypto
     ssl
+    fmt.a
   )
 
 target_compile_definitions( ${DEF_LIB_Static} PUBLIC SOL_LUAJIT=1 )
