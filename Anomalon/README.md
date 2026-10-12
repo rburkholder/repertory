@@ -1,4 +1,4 @@
-###Anomalon
+### Anomalon
 
 In physics, an anomalon is a hypothesized particle fragment that exhibits an anomalously large reaction 
 cross-section — meaning it interacts far more powerfully with its environment than a normal particle. 
