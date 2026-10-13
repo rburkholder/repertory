@@ -22,6 +22,7 @@ set(DEF_OUTPUT_NAME ou_${PROJECT_NAME})
 set(
   file_hpp_public
     handle_methods.hpp
+    handle_signals.hpp
     listen.hpp
     server_certificate.hpp
     sol_lua.hpp
@@ -36,6 +37,7 @@ set(
 set(
   file_cpp
     handle_methods.cpp
+    handle_signals.cpp
     listen.cpp
     mime_type.cpp
     server_certificate.cpp
