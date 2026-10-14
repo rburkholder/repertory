@@ -190,7 +190,7 @@ handle_request(
 
   const mime_type::entry_t mt_entry( mt.lu( path ) );
   if ( mime_type::type_t::unknown == mt_entry.type ) {
-    message = "llegal request-target (2)";
+    message = "illegal request-target (2)";
     return bad_request( request, message, state );
   }
 
