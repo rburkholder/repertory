@@ -9,6 +9,11 @@ Three libraries:
 
 Installation:
 ```bash
+## install required packages
+sudo apt install libssl-dev
+sudo apt install libpaho-mqtt-dev
+
+## install required build environment, packages and libraries
 git clone https://github.com/rburkholder/libs-build.git
 pushd libs-build
 
@@ -18,15 +23,21 @@ pushd libs-build
 
 popd
 
-sudo apt install libssl-dev
-sudo apt install libpaho-mqtt-dev
-
-git clone https://github.com/rburkholder/repertory
-pushd repertory
-
+### build fmt
+git clone --depth=1 https://github.com/fmtlib/fmt.git
+pushd fmt
 mkdir build
 cd build
+cmake -D FMT_TEST=FALSE ..
+make
+sudo make install
+popd
 
+## build this library
+git clone https://github.com/rburkholder/repertory
+pushd repertory
+mkdir build
+cd build
 cmake \
 -D CMAKE_BUILD_TYPE=Release \
 -D OU_USE_STATIC_LIB=ON \
@@ -36,7 +47,6 @@ cmake \
 -D OU_USE_Anomalon=ON \
 ..
 sudo cmake --build . --target=install
-
 popd
 ```
 
