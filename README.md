@@ -16,11 +16,9 @@ sudo apt install libpaho-mqtt-dev
 ## install required build environment, packages and libraries
 git clone https://github.com/rburkholder/libs-build.git
 pushd libs-build
-
 ./build.sh base
 ./build.sh zlib
 ./build.sh boost
-
 popd
 
 ### build fmt
@@ -49,5 +47,3 @@ cmake \
 sudo cmake --build . --target=install
 popd
 ```
-
-

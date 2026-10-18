@@ -204,10 +204,12 @@ handle_request(
     switch ( request.method() ) {
       case http::verb::get:
         try {
+          const auto& cookie = request[ http::field::cookie ];
+          //const auto& set_cookie = request[ http::field::set_cookie ]; // empty
           response_t response{ http::status::ok, request.version() };
           response.set( http::field::content_type, mt_entry.name );
           response.keep_alive( request.keep_alive() );
-          lua_method_get( path, response );
+          lua_method_get( path, url->params(), response );
           //response.prepare_payload();
           return response;
         }
@@ -229,7 +231,7 @@ handle_request(
           response_t response{ http::status::ok, request.version() };
           response.set( http::field::content_type, mt_entry.name );
           response.keep_alive( request.keep_alive() );
-          lua_method_post( path, response );
+          lua_method_post( path, url->params(), response );
           //response.prepare_payload();
           return response;
         }
@@ -239,7 +241,7 @@ handle_request(
           response_t response{ http::status::ok, request.version() };
           response.set( http::field::content_type, mt_entry.name );
           response.keep_alive( request.keep_alive() );
-          lua_method_head( path, response );
+          lua_method_head( path, url->params(), response );
           //response.prepare_payload();
           return response;
         }

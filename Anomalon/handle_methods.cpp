@@ -35,7 +35,6 @@ if (handler.valid()) {
 
 #include <chrono>
 #include <string>
-#include <unordered_map>
 
 #include <boost/log/trivial.hpp>
 
@@ -49,7 +48,7 @@ if (handler.valid()) {
 
 namespace {
   //static const std::string c_sVersion( "ounl-lua/1.0");
-  static const std::string c_sVersion( "tangle/1.0");
+  static const std::string c_sVersion( "anomalon/1.0");
 
   // each needs to be thread safe, maintain state in a different structure
   thread_local sol_lua_t sol_lua;
@@ -120,25 +119,9 @@ void method_post( response_t& response ) {
 // TODO: convert read in to async operation, coroutine?, async load file(s), then pass as text based scripts
 //   pre-compile to shared memory for re-use by luajit across sessions
 //   use file change to match against cached contents, don't pre-cache though
-void lua_method_get( std::string& path, http::response<http::string_body>& response ) {
+void lua_method_get( const std::string& path, const boost::urls::params_view& params, http::response<http::string_body>& response ) {
 
   response_common( response );
-
-  sol_lua().set_function(
-    "Render",
-    [&response]( const std::string_view type, const std::string_view body ){
-      response.set( http::field::content_type, type );
-      {
-        const auto now( floor<std::chrono::seconds>( std::chrono::utc_clock::now() ) );
-        const auto dtNow( fmt::format( "{:%Y%m%d%H%M%S}", now ) );
-        const auto expiry( now + std::chrono::days( 7 ) );
-        // Wed, 09 Jun 2021 10:18:14 GMT
-        const auto dtExpire( fmt::format( "{:%a, %d %b %Y %H:%M:%S} GMT", expiry ) );
-        response.set( http::field::set_cookie, "TS=" + dtNow + "; Path=/; Expires=" + dtExpire );
-      }
-      response.body() = body;
-      response.content_length( body.length() );
-    } );
 
   sol_lua().set_function(
     "GetTimeStamp",
@@ -151,21 +134,22 @@ void lua_method_get( std::string& path, http::response<http::string_body>& respo
     }
   );
 
-  sol_lua().set_function(
-    "GetFunction",
-    [&response]( const std::string_view svFunctionName ) {
-      using mapFunctions_t = std::unordered_map<std::string, std::function<void()>>;
-      //mapFunctions_t mapFunctions;
-      //mapFunctions[ "GetStats" ] = [&sol_lua](){
-      //  sol_lua().set_function(
-      //    "GetStats",
-      //    [](){}
-      //  );
-      //};
+  // Register the boost params type with sol2
+  sol_lua().new_usertype<boost::urls::params_view>(
+    "url_params",
+    // Allow Lua to index keys directly: url_params["q"]
+    sol::meta_function::index,
+    []( boost::urls::params_view& p, std::string key ) -> sol::object {
+      auto it = p.find( key );
+      if (it != p.end() && (*it).has_value) {
+        return sol::make_object(sol_lua(), (*it).value);
+      }
+      return sol::nil;
     }
   );
 
   try {
+
     auto result = sol_lua().safe_script_file(
       path,
       []( lua_State*, sol::protected_function_result pfr ){
@@ -175,9 +159,28 @@ void lua_method_get( std::string& path, http::response<http::string_body>& respo
       }
     );
     if ( result.valid() ) {
+      sol_lua()[ "url_params" ] = params;
+      std::string mime_type;
+      std::string body; // is this an error, is the original still available?
+      sol::tie( mime_type, body ) = sol_lua()[ "render" ]();
+      response.set( http::field::content_type, mime_type );
+      response.body() = body;
+      response.content_length( body.length() );
+      {
+        // todo: re-use previous cookie if present
+        const auto now( floor<std::chrono::seconds>( std::chrono::utc_clock::now() ) );
+        const auto dtNow( fmt::format( "{:%Y%m%d%H%M%S}", now ) );
+        const auto expiry( now + std::chrono::days( 7 ) );
+        // Wed, 09 Jun 2021 10:18:14 GMT
+        const auto dtExpire( fmt::format( "{:%a, %d %b %Y %H:%M:%S} GMT", expiry ) );
+        // use comma to separate multiple cookies
+        response.insert( http::field::set_cookie, "TS=" + dtNow + ";Path=/;Expires=" + dtExpire );
+        response.insert( http::field::set_cookie, "EOC=another;Path=/;Expires=" + dtExpire );
+      }
       return;
     }
     else {
+      //BOOST_LOG_TRIVIAL(error) << "lua script result: false, " << result.status();
       BOOST_LOG_TRIVIAL(error) << "lua script result: false";
     }
   }
@@ -193,7 +196,7 @@ void lua_method_get( std::string& path, http::response<http::string_body>& respo
 
 }
 
-void lua_method_head( std::string& path, http::response<http::string_body>& response ) {
+void lua_method_head( const std::string& path, const boost::urls::params_view& params, http::response<http::string_body>& response ) {
 
   response_common( response );
 
@@ -216,7 +219,7 @@ void lua_method_head( std::string& path, http::response<http::string_body>& resp
   response.prepare_payload();
 }
 
-void lua_method_post( std::string& path, http::response<http::string_body>& response ) {
+void lua_method_post( const std::string& path, const boost::urls::params_view& params, http::response<http::string_body>& response ) {
 
   response_common( response );
 

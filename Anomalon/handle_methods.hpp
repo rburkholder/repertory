@@ -26,6 +26,8 @@
 #include <boost/beast/http.hpp>
 #include <boost/beast/websocket.hpp>
 
+#include <boost/url/params_view.hpp>
+
 namespace http = boost::beast::http;
 
 using response_t = http::response<http::string_body>;
@@ -45,6 +47,6 @@ void method_head( http::response<http::empty_body>& );
 void method_get(  http::response<http::file_body>& );
 void method_post( http::response<http::string_body>& );
 
-void lua_method_head( std::string&, http::response<http::string_body>& );
-void lua_method_get(  std::string&, http::response<http::string_body>& );
-void lua_method_post( std::string&, http::response<http::string_body>& );
+void lua_method_head( const std::string&, const boost::urls::params_view&, http::response<http::string_body>& );
+void lua_method_get(  const std::string&, const boost::urls::params_view&, http::response<http::string_body>& );
+void lua_method_post( const std::string&, const boost::urls::params_view&, http::response<http::string_body>& );
