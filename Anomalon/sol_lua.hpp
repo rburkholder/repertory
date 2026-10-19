@@ -21,8 +21,6 @@
 
 #pragma once
 
-#include <atomic>
-
 #include <string_view>
 
 #include <sol/sol.hpp>
@@ -33,17 +31,20 @@ public:
   sol_lua_t();
   ~sol_lua_t();
 
-  sol::state& operator()() {
-    return m_sol;
-  }
+  sol::state& operator()();
+
+  // loads custom code per thread instance
+  using fLoadCustomCode_t = std::function<void(sol::state&)>;
+  static void LoadCustomCode( fLoadCustomCode_t&& );
 
 protected:
 private:
 
   sol::state m_sol; // put here for now, or maybe make accessible via lambda
 
-  static std::atomic_uint64_t m_nInstanceCounter;
   const uint64_t m_nInstance;
+
+  bool m_bCodeLoaded;
 
   sol::load_result f_instance_identify;
 

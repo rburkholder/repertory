@@ -59,11 +59,10 @@ namespace {
     response.set( "x-clacks-overhead", "GNU Terry Pratchett" );
   }
 
-  void function_request_stats() {
-    // don't bother with the indirection, just link in all functions, and then migrate to
-    // a library format or other grouping mechanism for faster loading
-  }
+}
 
+void LoadCustomCode( fLoadCustomCode_t&& f ) {
+  sol_lua.LoadCustomCode( std::move( f ) );
 }
 
 void response_websocket( boost::beast::websocket::response_type& response ) {

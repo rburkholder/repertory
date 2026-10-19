@@ -28,6 +28,9 @@
 
 #include <boost/url/params_view.hpp>
 
+namespace sol {
+  class state;
+}
 namespace http = boost::beast::http;
 
 using response_t = http::response<http::string_body>;
@@ -46,6 +49,10 @@ void response_server_error( response_t&, const boost::beast::string_view what );
 void method_head( http::response<http::empty_body>& );
 void method_get(  http::response<http::file_body>& );
 void method_post( http::response<http::string_body>& );
+
+// loads custom code per thread instance
+using fLoadCustomCode_t = std::function<void(sol::state&)>;
+void LoadCustomCode( fLoadCustomCode_t&& );
 
 void lua_method_head( const std::string&, const boost::urls::params_view&, http::response<http::string_body>& );
 void lua_method_get(  const std::string&, const boost::urls::params_view&, http::response<http::string_body>& );
