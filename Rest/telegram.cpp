@@ -353,6 +353,7 @@ void Bot::SendMessage( const std::string& sMessage) {
         c_sHost, c_sPort
       , "/bot" + m_sToken + "/" + "sendMessage"
       , sRequest
+      , "application/json"
       , [this]( bool bStatus, int ec, const std::string& message ){
           BOOST_LOG_TRIVIAL(trace) << "telegram rx: " << message;
         }
@@ -438,6 +439,7 @@ void Bot::SetMyCommands() {
       c_sHost, c_sPort
     , "/bot" + m_sToken + "/" + sCommand
     , sRequest
+    , "application/json"
     , [this]( bool bStatus, int ec, const std::string& message ){
         //std::cout << "telegram setMyCommands response: " << message << std::endl;
       }

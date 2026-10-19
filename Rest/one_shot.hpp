@@ -65,6 +65,7 @@ public:
   , const std::string& sPort
   , const std::string& sTarget
   , const std::string& sBody
+  , const std::string& sContentType
   , fDone_t&&
   );
 

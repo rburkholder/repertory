@@ -31,7 +31,7 @@ namespace rest {
 namespace { // anonymous
 
 const static int nVersion( 11 );
-const static std::string sUserAgent( "ounl.telegram/1.0" );
+const static std::string sUserAgent( "anomalon/1.0" );
 
 } // namespace anonymous
 
@@ -41,11 +41,11 @@ one_shot::one_shot(
 )
 : ou::rest::handler( ex, ssl_ctx)
 {
-  //BOOST_LOG_TRIVIAL(info) << "telegram_bot::one_shot construction"; // ensuring proper timing of handling
+  BOOST_LOG_TRIVIAL(info) << "one_shot construction"; // ensuring proper timing of handling
 }
 
 one_shot::~one_shot() {
-  //BOOST_LOG_TRIVIAL(info) << "telegram_bot::one_shot destruction";  // ensuring proper timing of handling
+  BOOST_LOG_TRIVIAL(info) << "one_shot destruction";  // ensuring proper timing of handling
 }
 
 void one_shot::run(
@@ -187,6 +187,7 @@ void one_shot::post(
 , const std::string& sPort
 , const std::string& sTarget
 , const std::string& sBody
+, const std::string& sContentType
 , fDone_t&& fDone
 ) {
 
@@ -209,7 +210,8 @@ void one_shot::post(
   pRequest->method( http::verb::post );
   pRequest->set( http::field::host, sHost );
   pRequest->set( http::field::user_agent, sUserAgent );
-  pRequest->set( http::field::content_type, "application/json" );
+  //pRequest->set( http::field::content_type, "application/json" );
+  pRequest->set( http::field::content_type, sContentType );
 
   //const std::string sTarget( "/bot" + sTelegramToken + "/" + sCommand );
   //BOOST_LOG_TRIVIAL(info) << "post target: '" << sTarget << "', '" << sBody << "'";

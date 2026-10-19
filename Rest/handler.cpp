@@ -209,7 +209,7 @@ void handler::on_read( beast::error_code ec, std::size_t bytes_transferred ) {
   }
   else {
 
-    //BOOST_LOG_TRIVIAL(info) << "os.on_read";
+    BOOST_LOG_TRIVIAL(info) << "os.on_read";
     //BOOST_LOG_TRIVIAL(info) << "get():" << m_parser.get();
     //BOOST_LOG_TRIVIAL(info) << "body():" << m_parser.get().body();
     const auto& body = m_DataIn.m_parser.get().body();
@@ -230,7 +230,7 @@ void handler::on_read( beast::error_code ec, std::size_t bytes_transferred ) {
 }
 
 void handler::on_shutdown( beast::error_code ec ) {
-  //BOOST_LOG_TRIVIAL(info) << "os.on_shutdown";
+  BOOST_LOG_TRIVIAL(info) << "os.on_shutdown";
   if ( ec == asio::error::eof ) {
       // Rationale:
       // http://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
