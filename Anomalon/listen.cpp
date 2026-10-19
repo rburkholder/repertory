@@ -12,6 +12,7 @@
 #include "listen.hpp"
 #include "mime_type.hpp"
 #include "handle_methods.hpp"
+#include "handle_methods_lua.hpp"
 
 namespace beast     = boost::beast;
 namespace http      = beast::http;
