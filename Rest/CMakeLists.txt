@@ -21,6 +21,7 @@ set(DEF_OUTPUT_NAME ou_${PROJECT_NAME})
 
 set(
   file_hpp_public
+    handler.hpp
     one_shot.hpp
     root_certificates.hpp
     telegram.hpp
@@ -28,7 +29,6 @@ set(
 
 set(
   file_hpp_private
-    handler.hpp
   )
 
 set(

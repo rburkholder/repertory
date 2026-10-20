@@ -47,6 +47,12 @@ public:
 
   using fDone_t = std::function<void(bool,int,const std::string&)>; // false, not ok; true, fine
 
+  using pRequestEmptyBody_t = std::shared_ptr<http::request<http::empty_body> >; // unique_ptr doesn't work in the bind
+  using pRequestStringBody_t = std::shared_ptr<http::request<http::string_body> >; // unique_ptr doesn't work in the bind
+
+  using fRequestEmpty_t = std::function<void(pRequestEmptyBody_t&)>;
+  using fRequestBody_t = std::function<void(pRequestStringBody_t&)>;
+
   handler(
     asio::any_io_executor,
     ssl::context&
@@ -57,9 +63,6 @@ protected:
 
   tcp::resolver m_resolver;
   beast::ssl_stream<beast::tcp_stream> m_stream;
-
-  using pRequestEmptyBody_t = std::shared_ptr<http::request<http::empty_body> >; // unique_ptr doesn't work in the bind
-  using pRequestStringBody_t = std::shared_ptr<http::request<http::string_body> >; // unique_ptr doesn't work in the bind
 
   using pRequestBody_t = std::variant<pRequestEmptyBody_t, pRequestStringBody_t>;
   pRequestBody_t m_pRequestBody;

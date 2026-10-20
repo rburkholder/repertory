@@ -182,6 +182,103 @@ void one_shot::get(
   );
 }
 
+void one_shot::get(
+    const std::string& sHost
+  , const std::string& sPort
+  , fRequestEmpty_t&& fRequest
+  , fDone_t&& fDone
+) {
+
+  assert( fDone );
+
+  // Set SNI Hostname (many hosts need this to handshake successfully)
+  if( !SSL_set_tlsext_host_name( m_stream.native_handle(), sHost.c_str() ) )
+  {
+    beast::error_code ec{ static_cast<int>( ::ERR_get_error()), asio::error::get_ssl_category() };
+    BOOST_LOG_TRIVIAL(error) << ec.message();
+    fDone( false, ec.value(), ec.message() );
+    return;
+  }
+
+  m_fDone = std::move( fDone );
+
+  // Set up an HTTP GET request message
+  pRequestEmptyBody_t pRequest = std::make_shared<http::request<http::empty_body>>();
+  //auto& request( *pRequest );
+  pRequest->version( nVersion );
+  pRequest->method( http::verb::get );
+  pRequest->set( http::field::host, sHost );
+  pRequest->set( http::field::user_agent, sUserAgent );
+
+  //m_request_empty.target( sTarget );
+  //const std::string s( "/bot" + sTelegramToken + "/" + sCommand );
+  //BOOST_LOG_TRIVIAL(info) << "get request: '" << sTarget << "'";
+  //pRequest->target( sTarget );
+
+  fRequest( pRequest );
+
+  m_pRequestBody = std::move( pRequest );
+
+  // Look up the domain name
+  m_resolver.async_resolve(
+    sHost, sPort,
+    beast::bind_front_handler(
+      &one_shot::on_resolve,
+      shared_from_this()
+    )
+  );
+}
+
+void one_shot::get(
+    const std::string& sHost
+  , const std::string& sPort
+  , fRequestBody_t&& fRequest
+  , fDone_t&& fDone
+) {
+
+  assert( fDone );
+
+  // Set SNI Hostname (many hosts need this to handshake successfully)
+  if( !SSL_set_tlsext_host_name( m_stream.native_handle(), sHost.c_str() ) )
+  {
+    beast::error_code ec{ static_cast<int>( ::ERR_get_error()), asio::error::get_ssl_category() };
+    BOOST_LOG_TRIVIAL(error) << ec.message();
+    fDone( false, ec.value(), ec.message() );
+    return;
+  }
+
+  m_fDone = std::move( fDone );
+
+  // Set up an HTTP GET request message
+  pRequestStringBody_t pRequest = std::make_shared<http::request<http::string_body>>();
+  //auto& request( *pRequest );
+  pRequest->version( nVersion );
+  pRequest->method( http::verb::get );
+  pRequest->set( http::field::host, sHost );
+  pRequest->set( http::field::user_agent, sUserAgent );
+  pRequest->set( http::field::content_type, "application/json" );
+
+  //const std::string sTarget( "/bot" + sTelegramToken + "/" + sCommand );
+  //BOOST_LOG_TRIVIAL(info) << "get request: '" << sTarget << "', '" << sBody << "'";
+  //pRequest->target( sTarget );
+
+  //pRequest->body() = sBody;
+  //pRequest->prepare_payload();
+
+  fRequest( pRequest );
+
+  m_pRequestBody = std::move( pRequest );
+
+  // Look up the domain name
+  m_resolver.async_resolve(
+    sHost, sPort,
+    beast::bind_front_handler(
+      &one_shot::on_resolve,
+      shared_from_this()
+    )
+  );
+}
+
 void one_shot::post(
   const std::string& sHost
 , const std::string& sPort
@@ -219,6 +316,58 @@ void one_shot::post(
 
   pRequest->body() = sBody;
   pRequest->prepare_payload();
+
+  m_pRequestBody = std::move( pRequest );
+
+  //BOOST_LOG_TRIVIAL(info) << m_request_body;
+
+  // Look up the domain name
+  m_resolver.async_resolve(
+    sHost, sPort,
+    beast::bind_front_handler(
+      &one_shot::on_resolve,
+      shared_from_this()
+    )
+  );
+}
+
+void one_shot::post(
+  const std::string& sHost
+, const std::string& sPort
+, fRequestBody_t&& fRequest
+, fDone_t&& fDone
+) {
+
+  assert( fDone );
+
+  // Set SNI Hostname (many hosts need this to handshake successfully)
+  if( !SSL_set_tlsext_host_name( m_stream.native_handle(), sHost.c_str() ) )
+  {
+    beast::error_code ec{ static_cast<int>( ::ERR_get_error()), asio::error::get_ssl_category() };
+    BOOST_LOG_TRIVIAL(error) << ec.message();
+    fDone( false, ec.value(), ec.message() );
+    return;
+  }
+
+  m_fDone = std::move( fDone );
+
+  // Set up an HTTP GET request message
+  pRequestStringBody_t pRequest = std::make_shared<http::request<http::string_body>>();
+  pRequest->version( nVersion );
+  pRequest->method( http::verb::post );
+  pRequest->set( http::field::host, sHost );
+  pRequest->set( http::field::user_agent, sUserAgent );
+  //pRequest->set( http::field::content_type, "application/json" );
+  //pRequest->set( http::field::content_type, sContentType );
+
+  //const std::string sTarget( "/bot" + sTelegramToken + "/" + sCommand );
+  //BOOST_LOG_TRIVIAL(info) << "post target: '" << sTarget << "', '" << sBody << "'";
+  //pRequest->target( sTarget );
+
+  //pRequest->body() = sBody;
+  //pRequest->prepare_payload();
+
+  fRequest( pRequest ); // target, body, contenttype, apply body size or prepare payload
 
   m_pRequestBody = std::move( pRequest );
 

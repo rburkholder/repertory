@@ -45,14 +45,14 @@ public:
   , int version
   );
 
-  void get(
+  void get( // to deprecate
     const std::string& sHost
   , const std::string& sPort
   , const std::string& sTarget
   , fDone_t&&
   );
 
-  void get(
+  void get( // to deprecate
     const std::string& sHost
   , const std::string& sPort
   , const std::string& sTarget
@@ -60,12 +60,33 @@ public:
   , fDone_t&&
   );
 
-  void post(
+  void get( // string_body
+    const std::string& sHost
+  , const std::string& sPort
+  , fRequestBody_t&&
+  , fDone_t&&
+  );
+
+  void get( // empty_body
+    const std::string& sHost
+  , const std::string& sPort
+  , fRequestEmpty_t&&
+  , fDone_t&&
+  );
+
+  void post( // to deprecate
     const std::string& sHost
   , const std::string& sPort
   , const std::string& sTarget
   , const std::string& sBody
   , const std::string& sContentType
+  , fDone_t&&
+  );
+
+  void post( // string_body
+    const std::string& sHost
+  , const std::string& sPort
+  , fRequestBody_t&&
   , fDone_t&&
   );
 
