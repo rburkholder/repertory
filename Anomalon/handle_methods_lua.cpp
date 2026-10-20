@@ -129,6 +129,7 @@ void lua_method_get( const std::string& path, const boost::urls::params_view& pa
         // Wed, 09 Jun 2021 10:18:14 GMT
         const auto dtExpire( fmt::format( "{:%a, %d %b %Y %H:%M:%S} GMT", expiry ) );
         // use comma to separate multiple cookies
+        // https://www.rfc-editor.org/info/rfc6265/ HTTP State Management
         response.insert( http::field::set_cookie, "TS=" + dtNow + ";Path=/;Expires=" + dtExpire );
         response.insert( http::field::set_cookie, "EOC=another;Path=/;Expires=" + dtExpire );
       }
