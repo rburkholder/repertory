@@ -14,12 +14,14 @@
 
 /*
  * File:    handler.cpp
- * Project: Repertory/Telegram
+ * Project: Repertory/Rest
  * Author:  raymond@burkholder.net
  * Created: September 19, 2026 23:39:57
  */
 
 #include <boost/log/trivial.hpp>
+
+#include <boost/beast/core/bind_handler.hpp>
 
 #include "handler.hpp"
 

@@ -14,7 +14,7 @@
 
 /*
  * File:    handler.hpp
- * Project: Repertory/Telegram
+ * Project: Repertory/Rest
  * Author:  raymond@burkholder.net
  * Created: September 19, 2026 23:39:57
  */
@@ -26,8 +26,9 @@
 #include <variant>
 
 #include <boost/beast/ssl.hpp>
-#include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
+#include <boost/beast/core/tcp_stream.hpp>
+#include <boost/beast/core/flat_buffer.hpp>
 
 namespace asio  = boost::asio;      // from <boost/asio.hpp>
 namespace ssl   = asio::ssl;        // from <boost/asio/ssl.hpp>

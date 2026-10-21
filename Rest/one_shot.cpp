@@ -21,6 +21,8 @@
 
 // TODO: look at http return codes
 
+#include <boost/beast/core/bind_handler.hpp>
+
 #include <boost/log/trivial.hpp>
 
 #include "one_shot.hpp"
