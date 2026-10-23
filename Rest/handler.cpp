@@ -207,7 +207,7 @@ void handler::on_read( beast::error_code ec, std::size_t bytes_transferred ) {
         fail( ec, "os.on_read" );
         break;
     }
-    m_fDone( false, ec.value(), "os.on_read" );
+    m_fDone( false, ec.value(), "os.on_read:" + ec.message() );
   }
   else {
 
