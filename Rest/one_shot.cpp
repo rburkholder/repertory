@@ -43,11 +43,11 @@ one_shot::one_shot(
 )
 : ou::rest::handler( ex, ssl_ctx)
 {
-  BOOST_LOG_TRIVIAL(info) << "one_shot construction"; // ensuring proper timing of handling
+  //BOOST_LOG_TRIVIAL(info) << "one_shot construction"; // ensuring proper timing of handling
 }
 
 one_shot::~one_shot() {
-  BOOST_LOG_TRIVIAL(info) << "one_shot destruction";  // ensuring proper timing of handling
+  //BOOST_LOG_TRIVIAL(info) << "one_shot destruction";  // ensuring proper timing of handling
 }
 
 void one_shot::run(
