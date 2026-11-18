@@ -54,9 +54,8 @@ public:
 
   using fPublishComplete_t = std::function<void(bool,int)>;
   void Publish( const std::string_view& svTopic, const std::string_view& svMessage, fPublishComplete_t&& );
-  void Publish( const std::string& sTopic, const std::string& sMessage, fPublishComplete_t&& );
+  void Publish( const std::string&       sTopic, const std::string&       sMessage, fPublishComplete_t&& );
 
-  // send and forget, errors are simply logged
   using fMessage_t = std::function<void( const std::string_view& svTopic, const std::string_view& svMessage )>;
   void Subscribe( const std::string_view& svTopic, fMessage_t&& );
   void UnSubscribe( const std::string_view& svTopic );
